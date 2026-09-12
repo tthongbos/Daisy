@@ -1,0 +1,7 @@
+# Chỉ ảnh hưởng text gửi vào TTS. Không thay đổi text hiển thị trong DTBook.
+# Hãy nghe thử trước khi thêm phiên âm.
+replacements:
+  "Morgan Housel": "Mo-gân Hao-sồ"
+  "Warren Buffett": "O-ren Ba-phét"
+  "S&P 500": "S and P năm trăm"
+  "USD": "đô la Mỹ"

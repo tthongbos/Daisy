@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "daisy-psychology-of-money"
+version = "0.1.0"
+description = "A reproducible workflow for building a Vietnamese DAISY 3 talking book."
+requires-python = ">=3.10"
+dependencies = [
+  "azure-cognitiveservices-speech>=1.40.0",
+  "lxml>=5.0.0",
+  "pydub>=0.25.1",
+  "python-docx>=1.1.0",
+  "PyYAML>=6.0.1",
+  "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[tool.setuptools.packages.find]
+include = ["daisy_book*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,19 @@
+book:
+  title: "Tâm lý học về tiền"
+  creator: "Morgan Housel"
+  subject: "Tâm lý học & Phát triển cá nhân"
+  description: ""
+  publisher: ""
+  date: ""
+  source: ""          # ISBN của đúng bản tiếng Việt đang sử dụng
+  language: "vi"
+  note: ""
+  collector: ""
+  sourceURL: ""
+
+tts:
+  provider: "azure"
+  voice: "vi-VN-HoaiMyNeural"
+  rate: "-5%"
+  pause_ms: 350
+  max_chars_per_request: 2500
