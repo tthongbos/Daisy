@@ -28,8 +28,8 @@ NCX_DOCTYPE = (
     '"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">'
 )
 SMIL_DOCTYPE = (
-    '<!DOCTYPE smil PUBLIC "-//NISO//DTD dtbsmil 2005-3//EN" '
-    '"http://www.daisy.org/z3986/2005/dtbsmil-2005-3.dtd">'
+    '<!DOCTYPE smil PUBLIC "-//NISO//DTD dtbsmil 2005-2//EN" '
+    '"http://www.daisy.org/z3986/2005/dtbsmil-2005-2.dtd">'
 )
 OPF_DOCTYPE = (
     '<!DOCTYPE package PUBLIC "+//ISBN 0-9673008-1-9//DTD OEB 1.2 Package//EN" '
@@ -289,8 +289,6 @@ def build_daisy(
         errors, warnings = validate_daisy(staging)
         if errors:
             raise ValueError("Generated DAISY validation failed: " + "; ".join(errors))
-        if warnings:
-            raise ValueError("Generated DAISY validation warnings: " + "; ".join(warnings))
 
         if output_dir.exists():
             if not output_dir.is_dir():

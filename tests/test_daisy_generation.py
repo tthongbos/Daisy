@@ -1,13 +1,17 @@
+import hashlib
 import json
+import sys
+import zipfile
 from pathlib import Path
 
 import pytest
 from lxml import etree
 
-from daisy_book.build_daisy import build_daisy, resolve_book_uid, validate_source_relationships
+from daisy_book.build_daisy import SMIL_DOCTYPE, build_daisy, resolve_book_uid, validate_source_relationships
 from daisy_book.dtbook import DTBOOK_NS, build_dtbook
 from daisy_book.navigation import NCX_NS, build_ncx
 from daisy_book.opf import OPF_NS, build_opf, format_duration
+from daisy_book.package_daisy import main as package_daisy
 from daisy_book.smil import SMIL_NS, build_smil, ms_to_smil_clock
 
 
@@ -156,17 +160,39 @@ def test_smil_maps_each_timing_unit_exactly():
     namespaces = {"s": SMIL_NS}
 
     assert ms_to_smil_clock(8450) == "npt=8.450s"
+    assert root.get("version") is None
+    assert root.xpath("name(s:head)", namespaces=namespaces) == "head"
+    assert root.xpath("name(s:body)", namespaces=namespaces) == "body"
     assert root.xpath("string(s:head/s:meta[@name='dtb:uid']/@content)", namespaces=namespaces) == UID
+    assert root.xpath(
+        "string(s:head/s:meta[@name='dtb:totalElapsedTime']/@content)", namespaces=namespaces
+    ) == "00:00:00.000"
+    assert root.xpath("string(s:body/s:seq/@id)", namespaces=namespaces) == "seq_chapter_01"
     assert root.xpath("//s:par/@id", namespaces=namespaces) == [
         "par_chapter_01_title",
         "par_chapter_01_subtitle",
         "par_chapter_01_p0001",
     ]
-    assert root.xpath("string(//s:par[1]/s:text/@src)", namespaces=namespaces) == (
-        "book.xml#chapter_01_title"
-    )
-    assert root.xpath("string(//s:par[1]/s:audio/@clipBegin)", namespaces=namespaces) == "npt=0.000s"
-    assert root.xpath("string(//s:par[1]/s:audio/@clipEnd)", namespaces=namespaces) == "npt=1.000s"
+    assert root.xpath("//s:par/s:text/@src", namespaces=namespaces) == [
+        "book.xml#chapter_01_title",
+        "book.xml#chapter_01_subtitle",
+        "book.xml#chapter_01_p0001",
+    ]
+    assert root.xpath("//s:par/s:audio/@src", namespaces=namespaces) == [
+        "chapter_01.mp3",
+        "chapter_01.mp3",
+        "chapter_01.mp3",
+    ]
+    assert root.xpath("//s:par/s:audio/@clipBegin", namespaces=namespaces) == [
+        "npt=0.000s",
+        "npt=1.300s",
+        "npt=2.800s",
+    ]
+    assert root.xpath("//s:par/s:audio/@clipEnd", namespaces=namespaces) == [
+        "npt=1.000s",
+        "npt=2.500s",
+        "npt=5.000s",
+    ]
 
 
 @pytest.mark.parametrize(("begin", "end"), [(1000, 1000), (1001, 1000)])
@@ -193,7 +219,7 @@ def test_ncx_has_one_human_readable_navigation_point():
     )
 
 
-def test_opf_lists_only_sample_resources_and_smil_spine():
+def test_opf_declares_audio_full_text_metadata_resources_and_smil_spine():
     root = parse(build_opf(sample_book()["metadata"], "chapter_01", UID, 5100))
     namespaces = {"o": OPF_NS, "dc": "http://purl.org/dc/elements/1.1/"}
     items = {
@@ -202,6 +228,7 @@ def test_opf_lists_only_sample_resources_and_smil_spine():
     }
 
     assert items == {
+        "book.opf": "text/xml",
         "book.xml": "application/x-dtbook+xml",
         "book.ncx": "application/x-dtbncx+xml",
         "chapter_01.smil": "application/smil",
@@ -214,8 +241,23 @@ def test_opf_lists_only_sample_resources_and_smil_spine():
     assert root.xpath("string(//dc:Contributor)", namespaces=namespaces) == "Hoàng Thị Minh Phúc"
     assert root.xpath("string(//dc:Language)", namespaces=namespaces) == "vi"
     assert root.xpath("string(//dc:Subject)", namespaces=namespaces) == "Tâm lý học"
+    assert root.xpath("//dc:Format/text()", namespaces=namespaces) == [
+        "ANSI/NISO Z39.86-2005"
+    ]
     assert not root.xpath("//dc:Publisher | //dc:Date | //dc:Description", namespaces=namespaces)
     assert root.xpath("string(//dc:Identifier[@id='uid'])", namespaces=namespaces) == UID
+    assert root.xpath(
+        "string(//o:meta[@name='dtb:uid']/@content)", namespaces=namespaces
+    ) == UID
+    assert root.xpath(
+        "string(//o:meta[@name='dtb:multimediaType']/@content)", namespaces=namespaces
+    ) == "audioFullText"
+    assert root.xpath(
+        "string(//o:meta[@name='dtb:multimediaContent']/@content)", namespaces=namespaces
+    ) == "audio,text"
+    assert root.xpath(
+        "string(//o:meta[@name='dtb:audioFormat']/@content)", namespaces=namespaces
+    ) == "MP3"
     assert root.xpath("string(//o:meta[@name='dtb:totalTime']/@content)", namespaces=namespaces) == "00:00:05.100"
     assert format_duration(3_661_007) == "01:01:01.007"
 
@@ -244,6 +286,56 @@ def test_build_creates_valid_sample_and_copies_audio_unchanged(tmp_path):
     assert result.unit_count == 3
     assert result.duration_ms == 5100
     assert result.uid == resolve_book_uid(sample_book()["metadata"])
+
+
+def test_generated_smil_uses_daisy_2005_2_doctype_without_version(tmp_path):
+    book_path, manifest_path, audio_dir, _ = write_inputs(tmp_path)
+    output = tmp_path / "daisy"
+
+    build_daisy(book_path, manifest_path, audio_dir, output, "chapter_01")
+
+    smil_text = (output / "chapter_01.smil").read_text(encoding="utf-8")
+    smil_lines = smil_text.splitlines()
+    assert SMIL_DOCTYPE == (
+        '<!DOCTYPE smil PUBLIC "-//NISO//DTD dtbsmil 2005-2//EN" '
+        '"http://www.daisy.org/z3986/2005/dtbsmil-2005-2.dtd">'
+    )
+    assert smil_lines[1] == SMIL_DOCTYPE
+    assert smil_lines[2] == '<smil xmlns="http://www.w3.org/2001/SMIL20/">'
+    assert 'version="2.0"' not in smil_text
+
+
+def test_package_contains_only_root_resources_and_preserves_mp3(tmp_path, monkeypatch):
+    book_path, manifest_path, audio_dir, audio_bytes = write_inputs(tmp_path)
+    output = tmp_path / "daisy"
+    package_output = tmp_path / "package"
+    build_daisy(book_path, manifest_path, audio_dir, output, "chapter_01")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "package_daisy",
+            "--input",
+            str(output),
+            "--output-dir",
+            str(package_output),
+            "--name",
+            "sample",
+        ],
+    )
+
+    assert package_daisy() == 0
+
+    with zipfile.ZipFile(package_output / "sample.zip") as archive:
+        assert set(archive.namelist()) == {
+            "book.opf",
+            "book.xml",
+            "book.ncx",
+            "chapter_01.smil",
+            "chapter_01.mp3",
+        }
+        packaged_audio = archive.read("chapter_01.mp3")
+    assert hashlib.sha256(packaged_audio).hexdigest() == hashlib.sha256(audio_bytes).hexdigest()
 
 
 @pytest.mark.parametrize("missing_name", ["chapter_01_timing.json", "chapter_01.mp3"])

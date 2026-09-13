@@ -9,15 +9,18 @@
       <dc:Contributor>Hoàng Thị Minh Phúc</dc:Contributor>
       <dc:Identifier id="uid">urn:uuid:3bc6e63e-e3ad-5937-a882-fcef6aead942</dc:Identifier>
       <dc:Language>vi</dc:Language>
+      <dc:Format>ANSI/NISO Z39.86-2005</dc:Format>
     </dc-metadata>
     <x-metadata>
       <meta name="dtb:uid" content="urn:uuid:3bc6e63e-e3ad-5937-a882-fcef6aead942"/>
       <meta name="dtb:multimediaType" content="audioFullText"/>
       <meta name="dtb:multimediaContent" content="audio,text"/>
+      <meta name="dtb:audioFormat" content="MP3"/>
       <meta name="dtb:totalTime" content="00:19:51.536"/>
     </x-metadata>
   </metadata>
   <manifest>
+    <item id="opf" href="book.opf" media-type="text/xml"/>
     <item id="dtbook" href="book.xml" media-type="application/x-dtbook+xml"/>
     <item id="ncx" href="book.ncx" media-type="application/x-dtbncx+xml"/>
     <item id="smil_chapter_01" href="chapter_01.smil" media-type="application/smil"/>

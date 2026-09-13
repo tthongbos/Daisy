@@ -49,12 +49,16 @@ def build_opf(
     language = metadata.get("language")
     if isinstance(language, str) and language.strip():
         etree.SubElement(dc_metadata, etree.QName(DC_NS, "Language")).text = language
+    etree.SubElement(dc_metadata, etree.QName(DC_NS, "Format")).text = (
+        "ANSI/NISO Z39.86-2005"
+    )
 
     extra_metadata = etree.SubElement(metadata_element, etree.QName(OPF_NS, "x-metadata"))
     for name, content in (
         ("dtb:uid", uid),
         ("dtb:multimediaType", "audioFullText"),
         ("dtb:multimediaContent", "audio,text"),
+        ("dtb:audioFormat", "MP3"),
         ("dtb:totalTime", format_duration(duration_ms)),
     ):
         etree.SubElement(
@@ -66,6 +70,7 @@ def build_opf(
 
     manifest = etree.SubElement(root, etree.QName(OPF_NS, "manifest"))
     resources = (
+        ("opf", "book.opf", "text/xml"),
         ("dtbook", "book.xml", "application/x-dtbook+xml"),
         ("ncx", "book.ncx", "application/x-dtbncx+xml"),
         (f"smil_{section_id}", f"{section_id}.smil", "application/smil"),

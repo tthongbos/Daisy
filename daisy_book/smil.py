@@ -22,7 +22,6 @@ def build_smil(
     root = etree.Element(
         etree.QName(SMIL_NS, "smil"),
         nsmap={None: SMIL_NS},
-        version="2.0",
     )
     head = etree.SubElement(root, etree.QName(SMIL_NS, "head"))
     etree.SubElement(head, etree.QName(SMIL_NS, "meta"), name="dtb:uid", content=uid)

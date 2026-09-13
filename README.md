@@ -134,7 +134,19 @@ build/daisy/
 
 The DTBook uses source `display_text`; speech-only `tts_text` remains in the TTS pipeline. The MP3 is copied byte-for-byte into the DAISY output. Generated files under `build/` and packaged files under `output/` are committed as project artifacts.
 
-Manual playback QA remains required. Open `build/daisy/book.opf` in Dolphin EasyReader and verify navigation, playback, highlighting, next/previous navigation, and seeking. DAISY Pipeline 2 conformance testing is a later manual QA step.
+M3 is intended to be a DAISY 3 `audioFullText` DTB. Its `audio,text` multimedia content uses `chapter_01.mp3` as the embedded recorded narration synchronized to the DTBook through `chapter_01.smil`; it is not intended to use the phone's text-to-speech voice. The generated OPF identifies ANSI/NISO Z39.86-2005, declares MP3 audio, and includes the package document in its manifest.
+
+`dc:Publisher` and `dc:Date` are required for final DAISY conformance. They remain absent while `publisher` and `date` are null in project metadata; validation reports this as metadata completeness warnings rather than inventing values or treating the omission as an audio synchronization failure.
+
+EasyReader compatibility is not yet confirmed. For a mobile retest:
+
+1. Run `make build-daisy`, `make validate`, and `make package`.
+2. Remove the previously imported copy from EasyReader.
+3. Download or import the newly generated `output/Tam_ly_hoc_ve_tien_DAISY3.zip`.
+4. Do not reuse the old imported book because EasyReader may retain its local copy.
+5. Verify that the recorded narration plays instead of the phone's TTS voice, then check navigation, highlighting, next/previous navigation, and seeking.
+
+DAISY Pipeline 2 conformance testing is a later manual QA step.
 
 ## Milestone scope
 

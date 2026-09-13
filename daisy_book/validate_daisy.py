@@ -11,6 +11,7 @@ from lxml import etree
 XML_EXTENSIONS = {".xml", ".smil", ".ncx", ".opf"}
 XML_ID = "{http://www.w3.org/XML/1998/namespace}id"
 SMIL_CLOCK = re.compile(r"^npt=(\d+(?:\.\d+)?)s$")
+DAISY_TIME = re.compile(r"^(\d+):(\d{2}):(\d{2})(?:\.(\d{1,3}))?$")
 
 
 def local_references(tree: etree._ElementTree, attr_name: str = "src") -> list[str]:
@@ -51,11 +52,38 @@ def _parse_smil_clock(value: str) -> float | None:
     return float(match.group(1)) if match else None
 
 
+def _parse_daisy_time(value: str) -> float | None:
+    match = DAISY_TIME.fullmatch(value.strip())
+    if not match:
+        return None
+    hours, minutes, seconds, milliseconds = match.groups()
+    if int(minutes) >= 60 or int(seconds) >= 60:
+        return None
+    fraction = int((milliseconds or "0").ljust(3, "0")) / 1000
+    return int(hours) * 3600 + int(minutes) * 60 + int(seconds) + fraction
+
+
+def _meta_values(tree: etree._ElementTree, name: str) -> list[str]:
+    return [
+        str(value).strip()
+        for value in tree.xpath(
+            "//*[local-name()='x-metadata']/*[local-name()='meta'][@name=$name]/@content",
+            name=name,
+        )
+    ]
+
+
+def _manifest_target(path: Path, href: str) -> Path:
+    return (path.parent / unquote(href).partition("#")[0]).resolve()
+
+
 def _validate_opf(
     path: Path,
     tree: etree._ElementTree,
     root: Path,
+    parsed: dict[Path, etree._ElementTree],
     errors: list[str],
+    warnings: list[str],
 ) -> None:
     manifest_items = tree.xpath("//*[local-name()='manifest']/*[local-name()='item']")
     manifest_ids = {str(item.get("id")) for item in manifest_items if item.get("id")}
@@ -67,17 +95,152 @@ def _validate_opf(
         if not href:
             errors.append(f"OPF manifest item has no href: {_relative(path, root)}")
 
+    expected_media_types = {
+        "book.opf": "text/xml",
+        "book.xml": "application/x-dtbook+xml",
+        "book.ncx": "application/x-dtbncx+xml",
+        "chapter_01.smil": "application/smil",
+        "chapter_01.mp3": "audio/mpeg",
+    }
+    items_by_href = {
+        href: [item for item in manifest_items if item.get("href") == href]
+        for href in expected_media_types
+    }
+    if len(items_by_href["book.opf"]) != 1:
+        errors.append(f"OPF must contain exactly one book.opf manifest entry: {_relative(path, root)}")
+    for href, expected_media_type in expected_media_types.items():
+        matching_items = items_by_href[href]
+        if not matching_items:
+            errors.append(f"OPF manifest is missing {href}: {_relative(path, root)}")
+            continue
+        if any(item.get("media-type") != expected_media_type for item in matching_items):
+            errors.append(
+                f"OPF manifest media type for {href} must be {expected_media_type}: "
+                f"{_relative(path, root)}"
+            )
+
+    format_values = [
+        (element.text or "").strip()
+        for element in tree.xpath("//*[local-name()='dc-metadata']/*[local-name()='Format']")
+    ]
+    if format_values != ["ANSI/NISO Z39.86-2005"]:
+        errors.append(
+            "OPF dc:Format must occur exactly once and equal ANSI/NISO Z39.86-2005: "
+            f"{_relative(path, root)}"
+        )
+
+    multimedia_types = _meta_values(tree, "dtb:multimediaType")
+    if multimedia_types != ["audioFullText"]:
+        errors.append(
+            "OPF dtb:multimediaType must occur exactly once and equal audioFullText: "
+            f"{_relative(path, root)}"
+        )
+
+    multimedia_content = _meta_values(tree, "dtb:multimediaContent")
+    content_tokens = (
+        {token.strip() for token in multimedia_content[0].split(",")}
+        if len(multimedia_content) == 1
+        else set()
+    )
+    if not {"audio", "text"}.issubset(content_tokens):
+        errors.append(
+            "OPF dtb:multimediaContent must occur exactly once and include audio,text: "
+            f"{_relative(path, root)}"
+        )
+
+    audio_formats = _meta_values(tree, "dtb:audioFormat")
+    if len(audio_formats) != 1 or "MP3" not in {
+        token.strip().upper()
+        for token in audio_formats[0].split(",")
+    }:
+        errors.append(f"OPF dtb:audioFormat must include MP3: {_relative(path, root)}")
+
+    total_times = _meta_values(tree, "dtb:totalTime")
+    total_time = _parse_daisy_time(total_times[0]) if len(total_times) == 1 else None
+    if total_time is None or total_time <= 0:
+        errors.append(f"OPF dtb:totalTime must be greater than zero: {_relative(path, root)}")
+
+    for element_name in ("Publisher", "Date"):
+        values = [
+            (element.text or "").strip()
+            for element in tree.xpath(
+                "//*[local-name()='dc-metadata']/*[local-name()=$name]", name=element_name
+            )
+            if (element.text or "").strip()
+        ]
+        if not values:
+            warnings.append(f"Missing DAISY-required dc:{element_name}")
+
     for itemref in tree.xpath("//*[local-name()='spine']/*[local-name()='itemref']"):
         idref = itemref.get("idref")
         if not idref or idref not in manifest_ids:
             errors.append(
                 f"OPF spine idref does not resolve in {_relative(path, root)}: {idref or '<missing>'}"
             )
+            continue
+        referenced = [item for item in manifest_items if item.get("id") == idref]
+        if len(referenced) != 1 or referenced[0].get("media-type") != "application/smil":
+            errors.append(f"OPF spine must reference a SMIL manifest item: {_relative(path, root)}")
     for spine in tree.xpath("//*[local-name()='spine']"):
         toc = spine.get("toc")
         if not toc or toc not in manifest_ids:
             errors.append(
                 f"OPF spine toc does not resolve in {_relative(path, root)}: {toc or '<missing>'}"
+            )
+
+    manifest_audio_paths = {
+        _manifest_target(path, str(item.get("href")))
+        for item in manifest_items
+        if item.get("href") and item.get("media-type") == "audio/mpeg"
+    }
+    for audio_path in manifest_audio_paths:
+        if not audio_path.is_file():
+            errors.append(
+                f"Referenced OPF MP3 does not exist: {_relative(audio_path, root)}"
+            )
+
+    spine_smil_paths: set[Path] = set()
+    for itemref in tree.xpath("//*[local-name()='spine']/*[local-name()='itemref']"):
+        matching = [item for item in manifest_items if item.get("id") == itemref.get("idref")]
+        if len(matching) == 1 and matching[0].get("media-type") == "application/smil":
+            href = matching[0].get("href")
+            if href:
+                spine_smil_paths.add(_manifest_target(path, str(href)))
+
+    for smil_path in spine_smil_paths:
+        smil_tree = parsed.get(smil_path)
+        if smil_tree is None:
+            continue
+        audio_elements = smil_tree.xpath("//*[local-name()='audio']")
+        if not audio_elements:
+            errors.append(f"Spine SMIL contains no audio elements: {_relative(smil_path, root)}")
+        for parallel in smil_tree.xpath("//*[local-name()='par']"):
+            if not parallel.xpath("./*[local-name()='audio']"):
+                errors.append(
+                    f"SMIL synchronization unit has no audio in {_relative(smil_path, root)}: "
+                    f"{parallel.get('id') or '<missing id>'}"
+                )
+
+        previous_end = 0.0
+        final_end = 0.0
+        for audio in audio_elements:
+            src = audio.get("src", "")
+            if _manifest_target(smil_path, src) not in manifest_audio_paths:
+                errors.append(
+                    f"SMIL audio src is not an OPF manifest MP3: {_relative(smil_path, root)} -> "
+                    f"{src or '<missing>'}"
+                )
+            begin = _parse_smil_clock(audio.get("clipBegin", ""))
+            end = _parse_smil_clock(audio.get("clipEnd", ""))
+            if begin is None or end is None or begin >= end:
+                continue
+            if begin < previous_end:
+                errors.append(f"SMIL audio timing is not monotonic: {_relative(smil_path, root)}")
+            previous_end = end
+            final_end = max(final_end, end)
+        if total_time is not None and final_end > total_time:
+            errors.append(
+                f"SMIL final clip exceeds OPF dtb:totalTime: {_relative(smil_path, root)}"
             )
 
     unique_id = tree.getroot().get("unique-identifier")
@@ -185,7 +348,7 @@ def validate_daisy(root: Path) -> tuple[list[str], list[str]]:
                         errors.append(f"Broken fragment: {_relative(path, root)} -> {ref}")
 
         if path.suffix.lower() == ".opf":
-            _validate_opf(path, tree, root, errors)
+            _validate_opf(path, tree, root, parsed, errors, warnings)
         if path.suffix.lower() == ".smil":
             _validate_smil_clips(path, tree, root, errors)
 

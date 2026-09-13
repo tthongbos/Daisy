@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!DOCTYPE smil PUBLIC "-//NISO//DTD dtbsmil 2005-3//EN" "http://www.daisy.org/z3986/2005/dtbsmil-2005-3.dtd">
-<smil xmlns="http://www.w3.org/2001/SMIL20/" version="2.0">
+<!DOCTYPE smil PUBLIC "-//NISO//DTD dtbsmil 2005-2//EN" "http://www.daisy.org/z3986/2005/dtbsmil-2005-2.dtd">
+<smil xmlns="http://www.w3.org/2001/SMIL20/">
   <head>
     <meta name="dtb:uid" content="urn:uuid:3bc6e63e-e3ad-5937-a882-fcef6aead942"/>
     <meta name="dtb:totalElapsedTime" content="00:00:00.000"/>
