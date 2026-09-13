@@ -1,6 +1,6 @@
 # Workflow
 
-## Current milestone: EPUB extraction
+## Current milestone: paragraph-level TTS
 
 1. Keep the legally obtained source at `data/source/tam-ly-hoc-ve-tien.epub`.
 2. Set known final metadata in `config/book.yaml`; leave unknown publication fields as `null`.
@@ -24,6 +24,21 @@ Review `build/structured/book.json` for:
 
 Generated `build/` content and the copyrighted EPUB remain local and must not be committed.
 
+Prepare the TTS manifest and inspect Chapter 1 before synthesis:
+
+```bash
+python -m daisy_book.prepare_tts \
+    --book build/structured/book.json \
+    --output build/tts/manifest.json
+python -m daisy_book.generate_audio \
+    --manifest build/tts/manifest.json \
+    --section chapter_01 \
+    --output-dir build/audio \
+    --dry-run
+```
+
+The manifest preserves paragraph IDs and exact display text. Pronunciation substitutions affect only `tts_text`. Real synthesis writes paragraph segments, an assembled section MP3, and paragraph timing JSON under `build/audio/<section-id>/`.
+
 ## Deferred work
 
-OCR/text correction, TTS, DTBook generation, SMIL synchronization, DAISY navigation/package generation, playback QA, and final packaging are separate later milestones.
+OCR/text correction, full-book TTS, DTBook generation, SMIL synchronization, DAISY navigation/package generation, playback QA, and final packaging are separate later milestones.

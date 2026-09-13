@@ -1,3 +1,5 @@
+import pytest
+
 from daisy_book.text import apply_pronunciation_map, chunk_text, looks_like_chapter_heading, normalize_text
 
 
@@ -20,3 +22,8 @@ def test_chunk_text_respects_limit_for_normal_words():
     chunks = chunk_text("Câu một. Câu hai. Câu ba.", max_chars=15)
     assert chunks
     assert all(len(chunk) <= 15 for chunk in chunks)
+
+
+def test_chunk_text_rejects_nonpositive_limit():
+    with pytest.raises(ValueError, match="max_chars must be positive"):
+        chunk_text("Nội dung", max_chars=0)

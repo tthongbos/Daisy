@@ -39,6 +39,8 @@ def apply_pronunciation_map(text: str, replacements: dict[str, str]) -> str:
 
 def chunk_text(text: str, max_chars: int = 2500) -> list[str]:
     """Split text conservatively without cutting words when possible."""
+    if max_chars <= 0:
+        raise ValueError("max_chars must be positive")
     text = normalize_text(text)
     if not text:
         return []
