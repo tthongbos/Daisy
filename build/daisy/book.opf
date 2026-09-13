@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE package PUBLIC "+//ISBN 0-9673008-1-9//DTD OEB 1.2 Package//EN" "http://openebook.org/dtds/oeb-1.2/oebpkg12.dtd">
+<package xmlns="http://openebook.org/namespaces/oeb-package/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.2" unique-identifier="uid">
+  <metadata>
+    <dc-metadata>
+      <dc:Title>Tâm lý học về tiền</dc:Title>
+      <dc:Creator>Morgan Housel</dc:Creator>
+      <dc:Subject>Tâm lý học &amp; Phát triển cá nhân</dc:Subject>
+      <dc:Contributor>Hoàng Thị Minh Phúc</dc:Contributor>
+      <dc:Identifier id="uid">urn:uuid:3bc6e63e-e3ad-5937-a882-fcef6aead942</dc:Identifier>
+      <dc:Language>vi</dc:Language>
+    </dc-metadata>
+    <x-metadata>
+      <meta name="dtb:uid" content="urn:uuid:3bc6e63e-e3ad-5937-a882-fcef6aead942"/>
+      <meta name="dtb:multimediaType" content="audioFullText"/>
+      <meta name="dtb:multimediaContent" content="audio,text"/>
+      <meta name="dtb:totalTime" content="00:19:51.536"/>
+    </x-metadata>
+  </metadata>
+  <manifest>
+    <item id="dtbook" href="book.xml" media-type="application/x-dtbook+xml"/>
+    <item id="ncx" href="book.ncx" media-type="application/x-dtbncx+xml"/>
+    <item id="smil_chapter_01" href="chapter_01.smil" media-type="application/smil"/>
+    <item id="audio_chapter_01" href="chapter_01.mp3" media-type="audio/mpeg"/>
+  </manifest>
+  <spine toc="ncx">
+    <itemref idref="smil_chapter_01"/>
+  </spine>
+</package>

@@ -1,0 +1,320 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE smil PUBLIC "-//NISO//DTD dtbsmil 2005-3//EN" "http://www.daisy.org/z3986/2005/dtbsmil-2005-3.dtd">
+<smil xmlns="http://www.w3.org/2001/SMIL20/" version="2.0">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:3bc6e63e-e3ad-5937-a882-fcef6aead942"/>
+    <meta name="dtb:totalElapsedTime" content="00:00:00.000"/>
+  </head>
+  <body>
+    <seq id="seq_chapter_01">
+      <par id="par_chapter_01_title">
+        <text src="book.xml#chapter_01_title"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=0.000s" clipEnd="npt=3.240s"/>
+      </par>
+      <par id="par_chapter_01_subtitle">
+        <text src="book.xml#chapter_01_subtitle"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=3.590s" clipEnd="npt=14.126s"/>
+      </par>
+      <par id="par_chapter_01_p0001">
+        <text src="book.xml#chapter_01_p0001"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=14.476s" clipEnd="npt=25.588s"/>
+      </par>
+      <par id="par_chapter_01_p0002">
+        <text src="book.xml#chapter_01_p0002"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=25.938s" clipEnd="npt=31.698s"/>
+      </par>
+      <par id="par_chapter_01_p0003">
+        <text src="book.xml#chapter_01_p0003"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=32.048s" clipEnd="npt=50.960s"/>
+      </par>
+      <par id="par_chapter_01_p0004">
+        <text src="book.xml#chapter_01_p0004"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=51.310s" clipEnd="npt=75.670s"/>
+      </par>
+      <par id="par_chapter_01_p0005">
+        <text src="book.xml#chapter_01_p0005"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=76.020s" clipEnd="npt=83.340s"/>
+      </par>
+      <par id="par_chapter_01_p0006">
+        <text src="book.xml#chapter_01_p0006"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=83.690s" clipEnd="npt=90.170s"/>
+      </par>
+      <par id="par_chapter_01_p0007">
+        <text src="book.xml#chapter_01_p0007"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=90.520s" clipEnd="npt=101.008s"/>
+      </par>
+      <par id="par_chapter_01_p0008">
+        <text src="book.xml#chapter_01_p0008"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=101.358s" clipEnd="npt=107.454s"/>
+      </par>
+      <par id="par_chapter_01_p0009">
+        <text src="book.xml#chapter_01_p0009"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=107.804s" clipEnd="npt=112.172s"/>
+      </par>
+      <par id="par_chapter_01_p0010">
+        <text src="book.xml#chapter_01_p0010"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=112.522s" clipEnd="npt=134.650s"/>
+      </par>
+      <par id="par_chapter_01_p0011">
+        <text src="book.xml#chapter_01_p0011"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=135.000s" clipEnd="npt=157.464s"/>
+      </par>
+      <par id="par_chapter_01_p0012">
+        <text src="book.xml#chapter_01_p0012"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=157.814s" clipEnd="npt=182.822s"/>
+      </par>
+      <par id="par_chapter_01_p0013">
+        <text src="book.xml#chapter_01_p0013"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=183.172s" clipEnd="npt=211.876s"/>
+      </par>
+      <par id="par_chapter_01_p0014">
+        <text src="book.xml#chapter_01_p0014"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=212.226s" clipEnd="npt=238.098s"/>
+      </par>
+      <par id="par_chapter_01_p0015">
+        <text src="book.xml#chapter_01_p0015"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=238.448s" clipEnd="npt=246.776s"/>
+      </par>
+      <par id="par_chapter_01_p0016">
+        <text src="book.xml#chapter_01_p0016"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=247.126s" clipEnd="npt=266.830s"/>
+      </par>
+      <par id="par_chapter_01_p0017">
+        <text src="book.xml#chapter_01_p0017"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=267.180s" clipEnd="npt=293.460s"/>
+      </par>
+      <par id="par_chapter_01_p0018">
+        <text src="book.xml#chapter_01_p0018"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=293.810s" clipEnd="npt=302.018s"/>
+      </par>
+      <par id="par_chapter_01_p0019">
+        <text src="book.xml#chapter_01_p0019"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=302.368s" clipEnd="npt=314.080s"/>
+      </par>
+      <par id="par_chapter_01_p0020">
+        <text src="book.xml#chapter_01_p0020"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=314.430s" clipEnd="npt=328.446s"/>
+      </par>
+      <par id="par_chapter_01_p0021">
+        <text src="book.xml#chapter_01_p0021"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=328.796s" clipEnd="npt=337.532s"/>
+      </par>
+      <par id="par_chapter_01_p0022">
+        <text src="book.xml#chapter_01_p0022"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=337.882s" clipEnd="npt=341.386s"/>
+      </par>
+      <par id="par_chapter_01_p0023">
+        <text src="book.xml#chapter_01_p0023"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=341.736s" clipEnd="npt=353.376s"/>
+      </par>
+      <par id="par_chapter_01_p0024">
+        <text src="book.xml#chapter_01_p0024"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=353.726s" clipEnd="npt=371.606s"/>
+      </par>
+      <par id="par_chapter_01_p0025">
+        <text src="book.xml#chapter_01_p0025"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=371.956s" clipEnd="npt=380.692s"/>
+      </par>
+      <par id="par_chapter_01_p0026">
+        <text src="book.xml#chapter_01_p0026"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=381.042s" clipEnd="npt=389.202s"/>
+      </par>
+      <par id="par_chapter_01_p0027">
+        <text src="book.xml#chapter_01_p0027"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=389.552s" clipEnd="npt=431.648s"/>
+      </par>
+      <par id="par_chapter_01_p0028">
+        <text src="book.xml#chapter_01_p0028"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=431.998s" clipEnd="npt=434.566s"/>
+      </par>
+      <par id="par_chapter_01_p0029">
+        <text src="book.xml#chapter_01_p0029"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=434.916s" clipEnd="npt=442.308s"/>
+      </par>
+      <par id="par_chapter_01_p0030">
+        <text src="book.xml#chapter_01_p0030"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=442.658s" clipEnd="npt=473.402s"/>
+      </par>
+      <par id="par_chapter_01_p0031">
+        <text src="book.xml#chapter_01_p0031"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=473.752s" clipEnd="npt=498.976s"/>
+      </par>
+      <par id="par_chapter_01_p0032">
+        <text src="book.xml#chapter_01_p0032"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=499.326s" clipEnd="npt=519.606s"/>
+      </par>
+      <par id="par_chapter_01_p0033">
+        <text src="book.xml#chapter_01_p0033"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=519.956s" clipEnd="npt=546.692s"/>
+      </par>
+      <par id="par_chapter_01_p0034">
+        <text src="book.xml#chapter_01_p0034"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=547.042s" clipEnd="npt=559.762s"/>
+      </par>
+      <par id="par_chapter_01_p0035">
+        <text src="book.xml#chapter_01_p0035"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=560.112s" clipEnd="npt=568.680s"/>
+      </par>
+      <par id="par_chapter_01_p0036">
+        <text src="book.xml#chapter_01_p0036"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=569.030s" clipEnd="npt=573.326s"/>
+      </par>
+      <par id="par_chapter_01_p0037">
+        <text src="book.xml#chapter_01_p0037"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=573.676s" clipEnd="npt=582.292s"/>
+      </par>
+      <par id="par_chapter_01_p0038">
+        <text src="book.xml#chapter_01_p0038"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=582.642s" clipEnd="npt=594.114s"/>
+      </par>
+      <par id="par_chapter_01_p0039">
+        <text src="book.xml#chapter_01_p0039"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=594.464s" clipEnd="npt=614.600s"/>
+      </par>
+      <par id="par_chapter_01_p0040">
+        <text src="book.xml#chapter_01_p0040"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=614.950s" clipEnd="npt=635.830s"/>
+      </par>
+      <par id="par_chapter_01_p0041">
+        <text src="book.xml#chapter_01_p0041"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=636.180s" clipEnd="npt=652.260s"/>
+      </par>
+      <par id="par_chapter_01_p0042">
+        <text src="book.xml#chapter_01_p0042"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=652.610s" clipEnd="npt=674.930s"/>
+      </par>
+      <par id="par_chapter_01_p0043">
+        <text src="book.xml#chapter_01_p0043"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=675.280s" clipEnd="npt=690.808s"/>
+      </par>
+      <par id="par_chapter_01_p0044">
+        <text src="book.xml#chapter_01_p0044"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=691.158s" clipEnd="npt=701.238s"/>
+      </par>
+      <par id="par_chapter_01_p0045">
+        <text src="book.xml#chapter_01_p0045"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=701.588s" clipEnd="npt=721.196s"/>
+      </par>
+      <par id="par_chapter_01_p0046">
+        <text src="book.xml#chapter_01_p0046"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=721.546s" clipEnd="npt=736.402s"/>
+      </par>
+      <par id="par_chapter_01_p0047">
+        <text src="book.xml#chapter_01_p0047"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=736.752s" clipEnd="npt=740.136s"/>
+      </par>
+      <par id="par_chapter_01_p0048">
+        <text src="book.xml#chapter_01_p0048"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=740.486s" clipEnd="npt=748.118s"/>
+      </par>
+      <par id="par_chapter_01_p0049">
+        <text src="book.xml#chapter_01_p0049"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=748.468s" clipEnd="npt=753.028s"/>
+      </par>
+      <par id="par_chapter_01_p0050">
+        <text src="book.xml#chapter_01_p0050"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=753.378s" clipEnd="npt=781.962s"/>
+      </par>
+      <par id="par_chapter_01_p0051">
+        <text src="book.xml#chapter_01_p0051"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=782.312s" clipEnd="npt=800.240s"/>
+      </par>
+      <par id="par_chapter_01_p0052">
+        <text src="book.xml#chapter_01_p0052"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=800.590s" clipEnd="npt=805.630s"/>
+      </par>
+      <par id="par_chapter_01_p0053">
+        <text src="book.xml#chapter_01_p0053"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=805.980s" clipEnd="npt=853.524s"/>
+      </par>
+      <par id="par_chapter_01_p0054">
+        <text src="book.xml#chapter_01_p0054"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=853.874s" clipEnd="npt=865.898s"/>
+      </par>
+      <par id="par_chapter_01_p0055">
+        <text src="book.xml#chapter_01_p0055"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=866.248s" clipEnd="npt=876.616s"/>
+      </par>
+      <par id="par_chapter_01_p0056">
+        <text src="book.xml#chapter_01_p0056"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=876.966s" clipEnd="npt=896.838s"/>
+      </par>
+      <par id="par_chapter_01_p0057">
+        <text src="book.xml#chapter_01_p0057"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=897.188s" clipEnd="npt=907.052s"/>
+      </par>
+      <par id="par_chapter_01_p0058">
+        <text src="book.xml#chapter_01_p0058"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=907.402s" clipEnd="npt=926.362s"/>
+      </par>
+      <par id="par_chapter_01_p0059">
+        <text src="book.xml#chapter_01_p0059"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=926.712s" clipEnd="npt=939.408s"/>
+      </par>
+      <par id="par_chapter_01_p0060">
+        <text src="book.xml#chapter_01_p0060"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=939.758s" clipEnd="npt=943.598s"/>
+      </par>
+      <par id="par_chapter_01_p0061">
+        <text src="book.xml#chapter_01_p0061"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=943.948s" clipEnd="npt=959.764s"/>
+      </par>
+      <par id="par_chapter_01_p0062">
+        <text src="book.xml#chapter_01_p0062"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=960.114s" clipEnd="npt=996.354s"/>
+      </par>
+      <par id="par_chapter_01_p0063">
+        <text src="book.xml#chapter_01_p0063"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=996.704s" clipEnd="npt=1001.144s"/>
+      </par>
+      <par id="par_chapter_01_p0064">
+        <text src="book.xml#chapter_01_p0064"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1001.494s" clipEnd="npt=1012.342s"/>
+      </par>
+      <par id="par_chapter_01_p0065">
+        <text src="book.xml#chapter_01_p0065"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1012.692s" clipEnd="npt=1025.868s"/>
+      </par>
+      <par id="par_chapter_01_p0066">
+        <text src="book.xml#chapter_01_p0066"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1026.218s" clipEnd="npt=1039.346s"/>
+      </par>
+      <par id="par_chapter_01_p0067">
+        <text src="book.xml#chapter_01_p0067"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1039.696s" clipEnd="npt=1054.312s"/>
+      </par>
+      <par id="par_chapter_01_p0068">
+        <text src="book.xml#chapter_01_p0068"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1054.662s" clipEnd="npt=1070.166s"/>
+      </par>
+      <par id="par_chapter_01_p0069">
+        <text src="book.xml#chapter_01_p0069"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1070.516s" clipEnd="npt=1083.692s"/>
+      </par>
+      <par id="par_chapter_01_p0070">
+        <text src="book.xml#chapter_01_p0070"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1084.042s" clipEnd="npt=1094.770s"/>
+      </par>
+      <par id="par_chapter_01_p0071">
+        <text src="book.xml#chapter_01_p0071"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1095.120s" clipEnd="npt=1125.576s"/>
+      </par>
+      <par id="par_chapter_01_p0072">
+        <text src="book.xml#chapter_01_p0072"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1125.926s" clipEnd="npt=1147.334s"/>
+      </par>
+      <par id="par_chapter_01_p0073">
+        <text src="book.xml#chapter_01_p0073"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1147.684s" clipEnd="npt=1161.076s"/>
+      </par>
+      <par id="par_chapter_01_p0074">
+        <text src="book.xml#chapter_01_p0074"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1161.426s" clipEnd="npt=1173.138s"/>
+      </par>
+      <par id="par_chapter_01_p0075">
+        <text src="book.xml#chapter_01_p0075"/>
+        <audio src="chapter_01.mp3" clipBegin="npt=1173.488s" clipEnd="npt=1191.536s"/>
+      </par>
+    </seq>
+  </body>
+</smil>

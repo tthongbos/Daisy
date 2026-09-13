@@ -7,15 +7,10 @@ venv/
 
 # Secrets
 .env
-
-# Copyrighted / local source material
-# Keep only placeholders and metadata in Git.
-data/source/*
-!data/source/.gitkeep
-
-# Generated artifacts
-/build/
-output/
+.env.*
+!.env.example
+*.pem
+*.key
 
 # OS / editor
 .DS_Store

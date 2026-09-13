@@ -8,7 +8,7 @@ The canonical source is:
 data/source/tam-ly-hoc-ve-tien.epub
 ```
 
-The EPUB is copyrighted local source material and is ignored by Git. The extractor reads the OPF manifest and spine to determine document order; it does not rely on split HTML filenames or the incomplete NCX navigation.
+The EPUB is copyrighted source material and is intentionally tracked in this public repository. The extractor reads the OPF manifest and spine to determine document order; it does not rely on split HTML filenames or the incomplete NCX navigation.
 
 ## Current workflow
 
@@ -132,7 +132,7 @@ build/daisy/
    chapter_01.mp3
 ```
 
-The DTBook uses source `display_text`; speech-only `tts_text` remains in the TTS pipeline. The MP3 is copied byte-for-byte into the DAISY output. Generated files under `build/` and packaged files under `output/` are local artifacts and must not be committed.
+The DTBook uses source `display_text`; speech-only `tts_text` remains in the TTS pipeline. The MP3 is copied byte-for-byte into the DAISY output. Generated files under `build/` and packaged files under `output/` are committed as project artifacts.
 
 Manual playback QA remains required. Open `build/daisy/book.opf` in Dolphin EasyReader and verify navigation, playback, highlighting, next/previous navigation, and seeking. DAISY Pipeline 2 conformance testing is a later manual QA step.
 
@@ -152,4 +152,4 @@ Run the tests with:
 pytest -q
 ```
 
-All generated files under `build/` and `output/`, local secrets in `.env`, and copyrighted files under `data/source/` are ignored by Git.
+Generated files under `build/` and `output/` and source files under `data/` are tracked by Git. Local secrets in `.env` and other environment-specific credential files remain ignored and must never be committed.
