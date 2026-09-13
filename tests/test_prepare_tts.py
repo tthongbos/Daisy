@@ -13,8 +13,8 @@ def sample_book():
                 "id": "chapter_01",
                 "type": "chapter",
                 "number": 1,
-                "title": "Chương một",
-                "subtitle": "Phụ đề",
+                "title": "KHÔNG AI ĐIÊN",
+                "subtitle": "Phụ đề của Morgan Housel",
                 "blocks": [
                     {"type": "image", "src": "image.png", "alt": "Image"},
                     {
@@ -34,13 +34,35 @@ def test_prepares_manifest_without_changing_display_text():
 
     manifest = prepare_manifest(book, {"Morgan Housel": "Mo-gân Hao-sồ"})
 
-    paragraph = manifest["sections"][0]["paragraphs"][0]
+    heading, subtitle, paragraph = manifest["sections"][0]["units"]
+    assert [heading["id"], subtitle["id"], paragraph["id"]] == [
+        "chapter_01_title",
+        "chapter_01_subtitle",
+        "chapter_01_p0001",
+    ]
+    assert [heading["type"], subtitle["type"], paragraph["type"]] == [
+        "heading",
+        "subtitle",
+        "paragraph",
+    ]
+    assert heading == {
+        "id": "chapter_01_title",
+        "type": "heading",
+        "display_text": "KHÔNG AI ĐIÊN",
+        "tts_text": "Chương 1. KHÔNG AI ĐIÊN.",
+    }
+    assert subtitle == {
+        "id": "chapter_01_subtitle",
+        "type": "subtitle",
+        "display_text": "Phụ đề của Morgan Housel",
+        "tts_text": "Phụ đề của Mo-gân Hao-sồ",
+    }
     assert paragraph == {
         "id": "chapter_01_p0001",
+        "type": "paragraph",
         "display_text": original,
         "tts_text": "Mo-gân Hao-sồ viết sách.",
     }
-    assert len(manifest["sections"][0]["paragraphs"]) == 1
 
 
 def test_writes_manifest_using_pronunciation_file(tmp_path):
@@ -56,14 +78,51 @@ def test_writes_manifest_using_pronunciation_file(tmp_path):
     prepare_tts(book_path, output_path, pronunciation_path)
 
     written = json.loads(output_path.read_text(encoding="utf-8"))
-    assert written["sections"][0]["paragraphs"][0]["tts_text"] == "Tên tác giả viết sách."
+    heading, subtitle, paragraph = written["sections"][0]["units"]
+    assert heading["display_text"] == "KHÔNG AI ĐIÊN"
+    assert subtitle["display_text"] == "Phụ đề của Morgan Housel"
+    assert subtitle["tts_text"] == "Phụ đề của Tên tác giả"
+    assert paragraph["display_text"] == "  Morgan Housel  viết sách. "
+    assert paragraph["tts_text"] == "Tên tác giả viết sách."
 
 
-def test_rejects_duplicate_paragraph_ids():
+def test_introduction_heading_does_not_get_chapter_zero():
     book = sample_book()
-    book["sections"][0]["blocks"].append(dict(book["sections"][0]["blocks"][1]))
+    section = book["sections"][0]
+    section.update({"id": "introduction", "type": "introduction", "number": 0, "title": "GIỚI THIỆU"})
 
-    with pytest.raises(ValueError, match="Duplicate paragraph id: chapter_01_p0001"):
+    heading = prepare_manifest(book, {})["sections"][0]["units"][0]
+
+    assert heading["id"] == "introduction_title"
+    assert heading["tts_text"] == "GIỚI THIỆU"
+    assert "Chương 0" not in heading["tts_text"]
+
+
+def test_missing_subtitle_does_not_create_empty_unit():
+    book = sample_book()
+    del book["sections"][0]["subtitle"]
+
+    units = prepare_manifest(book, {})["sections"][0]["units"]
+
+    assert [unit["id"] for unit in units] == ["chapter_01_title", "chapter_01_p0001"]
+    assert all(unit["tts_text"] for unit in units)
+
+
+def test_missing_title_does_not_create_empty_unit():
+    book = sample_book()
+    del book["sections"][0]["title"]
+
+    units = prepare_manifest(book, {})["sections"][0]["units"]
+
+    assert [unit["id"] for unit in units] == ["chapter_01_subtitle", "chapter_01_p0001"]
+    assert all(unit["tts_text"] for unit in units)
+
+
+def test_rejects_duplicate_unit_ids():
+    book = sample_book()
+    book["sections"][0]["blocks"][1]["id"] = "chapter_01_title"
+
+    with pytest.raises(ValueError, match="Duplicate unit id: chapter_01_title"):
         prepare_manifest(book, {})
 
 

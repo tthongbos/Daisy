@@ -88,43 +88,45 @@ def validate_section(section: dict[str, Any]) -> None:
     if not isinstance(section_id, str) or not section_id.strip():
         raise ValueError("Selected section has no non-empty id")
     _validate_output_id(section_id, "section")
-    paragraphs = section.get("paragraphs")
-    if not isinstance(paragraphs, list) or not paragraphs:
-        raise ValueError(f"Section {section_id} contains no paragraphs")
+    units = section.get("units")
+    if not isinstance(units, list) or not units:
+        raise ValueError(f"Section {section_id} contains no units")
 
-    paragraph_ids: set[str] = set()
-    for paragraph in paragraphs:
-        if not isinstance(paragraph, dict):
-            raise ValueError(f"Section {section_id} contains a non-object paragraph")
-        paragraph_id = paragraph.get("id")
-        if not isinstance(paragraph_id, str) or not paragraph_id.strip():
-            raise ValueError(f"Section {section_id} contains a paragraph with no non-empty id")
-        _validate_output_id(paragraph_id, "paragraph")
-        if paragraph_id in paragraph_ids:
-            raise ValueError(f"Duplicate paragraph id: {paragraph_id}")
-        paragraph_ids.add(paragraph_id)
-        tts_text = paragraph.get("tts_text")
+    unit_ids: set[str] = set()
+    for unit in units:
+        if not isinstance(unit, dict):
+            raise ValueError(f"Section {section_id} contains a non-object unit")
+        unit_id = unit.get("id")
+        if not isinstance(unit_id, str) or not unit_id.strip():
+            raise ValueError(f"Section {section_id} contains a unit with no non-empty id")
+        _validate_output_id(unit_id, "unit")
+        if unit_id in unit_ids:
+            raise ValueError(f"Duplicate unit id: {unit_id}")
+        unit_ids.add(unit_id)
+        if unit.get("type") not in {"heading", "subtitle", "paragraph"}:
+            raise ValueError(f"Unit {unit_id} has an invalid type")
+        tts_text = unit.get("tts_text")
         if not isinstance(tts_text, str) or not normalize_text(tts_text):
-            raise ValueError(f"Paragraph {paragraph_id} has no non-empty tts_text")
+            raise ValueError(f"Unit {unit_id} has no non-empty tts_text")
 
 
 def describe_dry_run(section: dict[str, Any], max_chars: int) -> dict[str, int]:
     validate_section(section)
-    paragraphs = section["paragraphs"]
-    total_characters = sum(len(paragraph["tts_text"]) for paragraph in paragraphs)
-    request_count = sum(len(chunk_text(paragraph["tts_text"], max_chars)) for paragraph in paragraphs)
+    units = section["units"]
+    total_characters = sum(len(unit["tts_text"]) for unit in units)
+    request_count = sum(len(chunk_text(unit["tts_text"], max_chars)) for unit in units)
 
     print(f"Selected section: {section['id']}")
-    print(f"Paragraph count: {len(paragraphs)}")
+    print(f"Unit count: {len(units)}")
     print(f"Total characters: {total_characters}")
     print(f"Estimated request count: {request_count}")
-    for paragraph in paragraphs:
-        chunks = chunk_text(paragraph["tts_text"], max_chars)
+    for unit in units:
+        chunks = chunk_text(unit["tts_text"], max_chars)
         chunk_sizes = ", ".join(str(len(chunk)) for chunk in chunks)
-        print(f"{paragraph['id']}: {len(chunks)} chunk(s) [{chunk_sizes} chars]")
+        print(f"{unit['id']}: {len(chunks)} chunk(s) [{chunk_sizes} chars]")
 
     return {
-        "paragraph_count": len(paragraphs),
+        "unit_count": len(units),
         "total_characters": total_characters,
         "request_count": request_count,
     }
@@ -157,8 +159,8 @@ def _synthesize_to_path(
     return audio
 
 
-def synthesize_paragraph(
-    paragraph: dict[str, str],
+def synthesize_unit(
+    unit: dict[str, str],
     segments_dir: Path,
     voice: str,
     rate: str,
@@ -166,22 +168,22 @@ def synthesize_paragraph(
     force: bool = False,
     synthesizer: SynthesisFunction = synthesize_chunk,
 ) -> AudioSegment:
-    paragraph_id = paragraph["id"]
-    segment_path = segments_dir / f"{paragraph_id}.mp3"
+    unit_id = unit["id"]
+    segment_path = segments_dir / f"{unit_id}.mp3"
     if not force:
         cached = _load_valid_audio(segment_path)
         if cached is not None:
             print(f"Reusing cached segment: {segment_path}")
             return cached
 
-    chunks = chunk_text(paragraph["tts_text"], max_chars)
+    chunks = chunk_text(unit["tts_text"], max_chars)
     segments_dir.mkdir(parents=True, exist_ok=True)
-    print(f"Synthesizing {paragraph_id}: {len(chunks)} request(s)")
+    print(f"Synthesizing {unit_id}: {len(chunks)} request(s)")
 
     if len(chunks) == 1:
         return _synthesize_to_path(chunks[0], segment_path, voice, rate, synthesizer)
 
-    chunk_dir = segments_dir / paragraph_id
+    chunk_dir = segments_dir / unit_id
     chunk_dir.mkdir(parents=True, exist_ok=True)
     chunk_audio: list[AudioSegment] = []
     for index, chunk in enumerate(chunks, start=1):
@@ -191,7 +193,7 @@ def synthesize_paragraph(
             print(f"Reusing cached chunk: {chunk_path}")
             chunk_audio.append(cached_chunk)
             continue
-        print(f"Synthesizing {paragraph_id} chunk {index}/{len(chunks)}")
+        print(f"Synthesizing {unit_id} chunk {index}/{len(chunks)}")
         chunk_audio.append(_synthesize_to_path(chunk, chunk_path, voice, rate, synthesizer))
 
     combined = AudioSegment.empty()
@@ -202,7 +204,7 @@ def synthesize_paragraph(
     segment = _load_valid_audio(temporary)
     if segment is None:
         temporary.unlink(missing_ok=True)
-        raise RuntimeError(f"Failed to assemble paragraph audio: {paragraph_id}")
+        raise RuntimeError(f"Failed to assemble unit audio: {unit_id}")
     temporary.replace(segment_path)
     return segment
 
@@ -224,10 +226,10 @@ def generate_section_audio(
     section_id = section["id"]
     section_dir = output_dir / section_id
     segments_dir = section_dir / "segments"
-    paragraph_audio: list[tuple[str, AudioSegment]] = []
-    for paragraph in section["paragraphs"]:
-        audio = synthesize_paragraph(
-            paragraph,
+    unit_audio: list[tuple[str, str, AudioSegment]] = []
+    for unit in section["units"]:
+        audio = synthesize_unit(
+            unit,
             segments_dir,
             voice,
             rate,
@@ -235,23 +237,24 @@ def generate_section_audio(
             force=force,
             synthesizer=synthesizer,
         )
-        paragraph_audio.append((paragraph["id"], audio))
+        unit_audio.append((unit["id"], unit["type"], audio))
 
     chapter_audio = AudioSegment.empty()
     timings: list[dict[str, int | str]] = []
-    for index, (paragraph_id, audio) in enumerate(paragraph_audio):
+    for index, (unit_id, unit_type, audio) in enumerate(unit_audio):
         clip_begin = len(chapter_audio)
         chapter_audio += audio
         clip_end = len(chapter_audio)
         timings.append(
             {
-                "id": paragraph_id,
+                "id": unit_id,
+                "type": unit_type,
                 "clip_begin_ms": clip_begin,
                 "clip_end_ms": clip_end,
                 "duration_ms": clip_end - clip_begin,
             }
         )
-        if pause_ms and index < len(paragraph_audio) - 1:
+        if pause_ms and index < len(unit_audio) - 1:
             silence = AudioSegment.silent(duration=pause_ms, frame_rate=chapter_audio.frame_rate)
             silence = silence.set_channels(chapter_audio.channels).set_sample_width(chapter_audio.sample_width)
             chapter_audio += silence
@@ -270,7 +273,7 @@ def generate_section_audio(
         "section_id": section_id,
         "audio": chapter_path.name,
         "duration_ms": len(encoded_audio),
-        "paragraphs": timings,
+        "units": timings,
     }
     timing_path = section_dir / f"{section_id}_timing.json"
     timing_path.write_text(json.dumps(timing, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -281,12 +284,12 @@ def generate_section_audio(
 
 def main() -> int:
     load_dotenv()
-    parser = argparse.ArgumentParser(description="Generate one section MP3 with paragraph timing using Azure TTS.")
+    parser = argparse.ArgumentParser(description="Generate one section MP3 with unit timing using Azure TTS.")
     parser.add_argument("--manifest", default="build/tts/manifest.json", type=Path)
     parser.add_argument("--section", required=True, help="Section id, for example chapter_01 or introduction")
     parser.add_argument("--output-dir", default="build/audio", type=Path)
     parser.add_argument("--dry-run", action="store_true", help="Validate and show requests without calling Azure")
-    parser.add_argument("--force", action="store_true", help="Regenerate all paragraph audio in the selected section")
+    parser.add_argument("--force", action="store_true", help="Regenerate all unit audio in the selected section")
     args = parser.parse_args()
 
     try:

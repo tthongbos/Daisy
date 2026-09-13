@@ -37,7 +37,7 @@ python -m daisy_book.generate_audio \
     --dry-run
 ```
 
-The manifest preserves paragraph IDs and exact display text. Pronunciation substitutions affect only `tts_text`. Real synthesis writes paragraph segments, an assembled section MP3, and paragraph timing JSON under `build/audio/<section-id>/`.
+The manifest preserves paragraph IDs and exact display text while ordering heading, subtitle, and paragraph units. Pronunciation substitutions affect only `tts_text`. Real synthesis writes unit segments, an assembled section MP3, and unit timing JSON under `build/audio/<section-id>/`.
 
 ## Deferred work
 

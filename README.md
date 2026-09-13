@@ -42,7 +42,7 @@ python -m daisy_book.prepare_tts \
    --output build/tts/manifest.json
 ```
 
-Project-specific substitutions from `config/pronunciation.yaml` are applied only to each paragraph's `tts_text`. Image blocks are not included in the TTS manifest.
+The manifest orders heading, subtitle, and paragraph synchronization units while preserving existing paragraph IDs. Project-specific substitutions from `config/pronunciation.yaml` are applied only to each unit's `tts_text`. Image blocks are not included in the TTS manifest.
 
 Validate and inspect the Chapter 1 request plan without Azure credentials or network calls:
 
@@ -77,7 +77,7 @@ build/audio/chapter_01/
    chapter_01_timing.json
 ```
 
-`chapter_01_timing.json` records integer paragraph clip boundaries on the assembled chapter timeline. Full-book synthesis is intentionally deferred until Chapter 1 audio and text quality pass manual QA.
+`chapter_01_timing.json` records integer unit clip boundaries on the assembled chapter timeline. Full-book synthesis is intentionally deferred until Chapter 1 audio and text quality pass manual QA.
 
 ## Milestone scope
 
@@ -85,7 +85,7 @@ build/audio/chapter_01/
 - The source contains one introduction and 20 numbered chapters.
 - Normalization is deterministic and conservative. It does not guess OCR or text corrections.
 - OCR/text correction is a later stage.
-- M2 covers the TTS manifest, one selected section's paragraph audio, chapter MP3 assembly, and paragraph timing.
+- M2 covers the TTS manifest, one selected section's spoken-unit audio, chapter MP3 assembly, and unit timing.
 - DTBook, SMIL, NCX, OPF, full-book TTS, and DAISY package generation remain deferred.
 
 Run the tests with:
