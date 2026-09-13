@@ -1,15 +1,13 @@
 book:
   title: "Tâm lý học về tiền"
   creator: "Morgan Housel"
+  translator: "Hoàng Thị Minh Phúc"
   subject: "Tâm lý học & Phát triển cá nhân"
-  description: ""
-  publisher: ""
-  date: ""
-  source: ""          # ISBN của đúng bản tiếng Việt đang sử dụng
   language: "vi"
-  note: ""
-  collector: ""
-  sourceURL: ""
+  publisher: null
+  date: null
+  isbn: null
+  description: null
 
 tts:
   provider: "azure"

@@ -9,13 +9,9 @@ REQUIRED = [
     "title",
     "creator",
     "subject",
-    "description",
-    "publisher",
-    "date",
-    "source",
     "language",
 ]
-OPTIONAL_PROJECT = ["note", "collector", "sourceURL"]
+OPTIONAL = ["translator", "publisher", "date", "isbn", "description"]
 
 
 def main() -> int:
@@ -33,9 +29,9 @@ def main() -> int:
         return 1
 
     print("Required metadata: OK")
-    for key in OPTIONAL_PROJECT:
-        if not str(book.get(key, "")).strip():
-            print(f"Warning: optional project field is empty: {key}")
+    for key in OPTIONAL:
+        if book.get(key) is None:
+            print(f"Optional metadata is unset: {key}")
     return 0
 
 

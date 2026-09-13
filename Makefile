@@ -1,7 +1,7 @@
 PYTHON ?= python
-SOURCE ?= data/source/book.docx
+SOURCE ?= data/source/tam-ly-hoc-ve-tien.epub
 
-.PHONY: setup metadata prepare tts validate package test
+.PHONY: setup metadata extract tts validate package test
 
 setup:
 	$(PYTHON) -m venv .venv
@@ -10,8 +10,8 @@ setup:
 metadata:
 	$(PYTHON) -m daisy_book.check_metadata --config config/book.yaml
 
-prepare:
-	$(PYTHON) -m daisy_book.prepare_book --source $(SOURCE)
+extract:
+	$(PYTHON) -m daisy_book.extract $(SOURCE) --output build/structured
 
 tts:
 	$(PYTHON) -m daisy_book.generate_audio --all

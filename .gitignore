@@ -14,18 +14,13 @@ data/source/*
 !data/source/.gitkeep
 
 # Generated artifacts
-build/clean/*
-!build/clean/.gitkeep
-build/text/*
-!build/text/.gitkeep
-build/audio/*
-!build/audio/.gitkeep
-build/daisy/*
-!build/daisy/.gitkeep
-output/*
-!output/.gitkeep
+build/
+output/
 
 # OS / editor
 .DS_Store
 .vscode/
 .idea/
+
+
+*.egg-info/
