@@ -1,7 +1,7 @@
 PYTHON ?= python
 SOURCE ?= data/source/tam-ly-hoc-ve-tien.epub
 
-.PHONY: setup metadata extract prepare-tts tts tts-dry-run validate package test
+.PHONY: setup metadata extract prepare-tts tts-audit tts tts-dry-run build-daisy validate package test
 
 setup:
 	$(PYTHON) -m venv .venv
@@ -16,11 +16,22 @@ extract:
 prepare-tts:
 	$(PYTHON) -m daisy_book.prepare_tts --book build/structured/book.json --output build/tts/manifest.json
 
+tts-audit: prepare-tts
+	$(PYTHON) -m daisy_book.audit_tts --manifest build/tts/manifest.json --output build/tts/audit.json
+
 tts-dry-run: prepare-tts
 	$(PYTHON) -m daisy_book.generate_audio --manifest build/tts/manifest.json --section chapter_01 --output-dir build/audio --dry-run
 
 tts: prepare-tts
 	$(PYTHON) -m daisy_book.generate_audio --manifest build/tts/manifest.json --section chapter_01 --output-dir build/audio
+
+build-daisy:
+	$(PYTHON) -m daisy_book.build_daisy \
+		--book build/structured/book.json \
+		--manifest build/tts/manifest.json \
+		--audio-dir build/audio \
+		--output build/daisy \
+		--section chapter_01
 
 validate:
 	$(PYTHON) -m daisy_book.validate_daisy --input build/daisy

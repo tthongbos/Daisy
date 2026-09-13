@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -142,11 +143,75 @@ def _load_valid_audio(path: Path) -> AudioSegment | None:
     return audio if len(audio) > 0 else None
 
 
+def _metadata_path(audio_path: Path) -> Path:
+    return audio_path.with_suffix(".meta.json")
+
+
+def _synthesis_metadata(text: str, voice: str, rate: str, max_chars: int) -> dict[str, str | int]:
+    inputs = {
+        "tts_text": text,
+        "voice": voice,
+        "rate": rate,
+        "max_chars_per_request": max_chars,
+    }
+    encoded_inputs = json.dumps(inputs, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    return {
+        "signature": hashlib.sha256(encoded_inputs).hexdigest(),
+        "tts_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "voice": voice,
+        "rate": rate,
+        "max_chars_per_request": max_chars,
+    }
+
+
+def _load_cached_audio(
+    path: Path,
+    text: str,
+    voice: str,
+    rate: str,
+    max_chars: int,
+) -> AudioSegment | None:
+    audio = _load_valid_audio(path)
+    metadata_path = _metadata_path(path)
+    if audio is None or not metadata_path.is_file():
+        return None
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    expected = _synthesis_metadata(text, voice, rate, max_chars)
+    if not isinstance(metadata, dict) or metadata.get("signature") != expected["signature"]:
+        return None
+    return audio
+
+
+def _write_synthesis_metadata(
+    audio_path: Path,
+    text: str,
+    voice: str,
+    rate: str,
+    max_chars: int,
+) -> None:
+    metadata_path = _metadata_path(audio_path)
+    temporary = metadata_path.with_name(f".{metadata_path.name}.part")
+    temporary.write_text(
+        json.dumps(
+            _synthesis_metadata(text, voice, rate, max_chars),
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(metadata_path)
+
+
 def _synthesize_to_path(
     text: str,
     output: Path,
     voice: str,
     rate: str,
+    max_chars: int,
     synthesizer: SynthesisFunction,
 ) -> AudioSegment:
     temporary = output.with_name(f".{output.stem}.part.mp3")
@@ -156,6 +221,7 @@ def _synthesize_to_path(
         temporary.unlink(missing_ok=True)
         raise RuntimeError(f"Synthesis produced no valid audio: {output.name}")
     temporary.replace(output)
+    _write_synthesis_metadata(output, text, voice, rate, max_chars)
     return audio
 
 
@@ -171,7 +237,7 @@ def synthesize_unit(
     unit_id = unit["id"]
     segment_path = segments_dir / f"{unit_id}.mp3"
     if not force:
-        cached = _load_valid_audio(segment_path)
+        cached = _load_cached_audio(segment_path, unit["tts_text"], voice, rate, max_chars)
         if cached is not None:
             print(f"Reusing cached segment: {segment_path}")
             return cached
@@ -181,20 +247,42 @@ def synthesize_unit(
     print(f"Synthesizing {unit_id}: {len(chunks)} request(s)")
 
     if len(chunks) == 1:
-        return _synthesize_to_path(chunks[0], segment_path, voice, rate, synthesizer)
+        return _synthesize_to_path(
+            chunks[0],
+            segment_path,
+            voice,
+            rate,
+            max_chars,
+            synthesizer,
+        )
 
     chunk_dir = segments_dir / unit_id
     chunk_dir.mkdir(parents=True, exist_ok=True)
     chunk_audio: list[AudioSegment] = []
     for index, chunk in enumerate(chunks, start=1):
         chunk_path = chunk_dir / f"chunk_{index:04d}.mp3"
-        cached_chunk = None if force else _load_valid_audio(chunk_path)
+        cached_chunk = None if force else _load_cached_audio(
+            chunk_path,
+            chunk,
+            voice,
+            rate,
+            max_chars,
+        )
         if cached_chunk is not None:
             print(f"Reusing cached chunk: {chunk_path}")
             chunk_audio.append(cached_chunk)
             continue
         print(f"Synthesizing {unit_id} chunk {index}/{len(chunks)}")
-        chunk_audio.append(_synthesize_to_path(chunk, chunk_path, voice, rate, synthesizer))
+        chunk_audio.append(
+            _synthesize_to_path(
+                chunk,
+                chunk_path,
+                voice,
+                rate,
+                max_chars,
+                synthesizer,
+            )
+        )
 
     combined = AudioSegment.empty()
     for audio in chunk_audio:
@@ -206,6 +294,7 @@ def synthesize_unit(
         temporary.unlink(missing_ok=True)
         raise RuntimeError(f"Failed to assemble unit audio: {unit_id}")
     temporary.replace(segment_path)
+    _write_synthesis_metadata(segment_path, unit["tts_text"], voice, rate, max_chars)
     return segment
 
 

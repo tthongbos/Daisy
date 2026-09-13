@@ -5,7 +5,13 @@ import pytest
 from pydub import AudioSegment
 from pydub.generators import Sine
 
-from daisy_book.generate_audio import describe_dry_run, generate_section_audio, main, select_section
+from daisy_book.generate_audio import (
+    describe_dry_run,
+    generate_section_audio,
+    main,
+    select_section,
+    synthesize_unit,
+)
 
 
 def sample_section():
@@ -162,3 +168,77 @@ def test_generates_ordered_timing_and_reuses_cached_segments(tmp_path):
         synthesizer=fake_synthesizer,
     )
     assert len(calls) == 8
+
+
+def test_synthesis_cache_writes_metadata_and_reuses_matching_audio(tmp_path):
+    calls = []
+
+    def fake_synthesizer(ssml, output, voice):
+        calls.append((ssml, voice))
+        Sine(440).to_audio_segment(duration=120).export(output, format="mp3", bitrate="64k")
+
+    unit = {"id": "unit_1", "type": "paragraph", "tts_text": "Nội dung."}
+    synthesize_unit(unit, tmp_path, "voice-a", "-5%", 2500, synthesizer=fake_synthesizer)
+    synthesize_unit(unit, tmp_path, "voice-a", "-5%", 2500, synthesizer=fake_synthesizer)
+
+    metadata = json.loads((tmp_path / "unit_1.meta.json").read_text(encoding="utf-8"))
+    assert len(calls) == 1
+    assert metadata["signature"]
+    assert metadata["tts_text_sha256"]
+    assert metadata["voice"] == "voice-a"
+    assert metadata["rate"] == "-5%"
+
+
+@pytest.mark.parametrize("changed_input", ["tts_text", "voice", "rate"])
+def test_synthesis_cache_invalidates_when_input_changes(tmp_path, changed_input):
+    calls = []
+
+    def fake_synthesizer(ssml, output, voice):
+        calls.append((ssml, voice))
+        Sine(440).to_audio_segment(duration=120).export(output, format="mp3", bitrate="64k")
+
+    unit = {"id": "unit_1", "type": "paragraph", "tts_text": "Nội dung cũ."}
+    synthesize_unit(unit, tmp_path, "voice-a", "-5%", 2500, synthesizer=fake_synthesizer)
+    voice = "voice-a"
+    rate = "-5%"
+    if changed_input == "tts_text":
+        unit["tts_text"] = "Nội dung mới."
+    elif changed_input == "voice":
+        voice = "voice-b"
+    else:
+        rate = "+5%"
+
+    synthesize_unit(unit, tmp_path, voice, rate, 2500, synthesizer=fake_synthesizer)
+
+    assert len(calls) == 2
+
+
+def test_force_ignores_matching_synthesis_cache(tmp_path):
+    calls = []
+
+    def fake_synthesizer(ssml, output, voice):
+        calls.append((ssml, voice))
+        Sine(440).to_audio_segment(duration=120).export(output, format="mp3", bitrate="64k")
+
+    unit = {"id": "unit_1", "type": "paragraph", "tts_text": "Nội dung."}
+    synthesize_unit(unit, tmp_path, "voice-a", "-5%", 2500, synthesizer=fake_synthesizer)
+    synthesize_unit(unit, tmp_path, "voice-a", "-5%", 2500, force=True, synthesizer=fake_synthesizer)
+
+    assert len(calls) == 2
+
+
+def test_chunk_cache_invalidates_when_voice_changes(tmp_path):
+    calls = []
+
+    def fake_synthesizer(ssml, output, voice):
+        calls.append((ssml, voice))
+        Sine(440).to_audio_segment(duration=120).export(output, format="mp3", bitrate="64k")
+
+    unit = {"id": "unit_1", "type": "paragraph", "tts_text": "Câu một. Câu hai."}
+    synthesize_unit(unit, tmp_path, "voice-a", "-5%", 10, synthesizer=fake_synthesizer)
+    first_call_count = len(calls)
+    synthesize_unit(unit, tmp_path, "voice-b", "-5%", 10, synthesizer=fake_synthesizer)
+
+    assert first_call_count > 1
+    assert len(calls) == first_call_count * 2
+    assert (tmp_path / "unit_1" / "chunk_0001.meta.json").is_file()

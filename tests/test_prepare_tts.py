@@ -49,7 +49,7 @@ def test_prepares_manifest_without_changing_display_text():
         "id": "chapter_01_title",
         "type": "heading",
         "display_text": "KHÔNG AI ĐIÊN",
-        "tts_text": "Chương 1. KHÔNG AI ĐIÊN.",
+        "tts_text": "Chương 1. Không ai điên.",
     }
     assert subtitle == {
         "id": "chapter_01_subtitle",
@@ -94,7 +94,7 @@ def test_introduction_heading_does_not_get_chapter_zero():
     heading = prepare_manifest(book, {})["sections"][0]["units"][0]
 
     assert heading["id"] == "introduction_title"
-    assert heading["tts_text"] == "GIỚI THIỆU"
+    assert heading["tts_text"] == "Giới thiệu"
     assert "Chương 0" not in heading["tts_text"]
 
 

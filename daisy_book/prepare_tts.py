@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import load_pronunciation_map
-from .text import apply_pronunciation_map, normalize_text
+from .text import normalize_for_tts, normalize_text
 
 
 def prepare_manifest(book: dict[str, Any], pronunciation: dict[str, str]) -> dict[str, Any]:
@@ -40,7 +40,11 @@ def prepare_manifest(book: dict[str, Any], pronunciation: dict[str, str]) -> dic
         def add_unit(unit_id: str, unit_type: str, display_text: str, tts_source: str) -> None:
             if unit_id in unit_ids:
                 raise ValueError(f"Duplicate unit id: {unit_id}")
-            tts_text = normalize_text(apply_pronunciation_map(normalize_text(tts_source), pronunciation))
+            tts_text = normalize_for_tts(
+                tts_source,
+                unit_type=unit_type,
+                pronunciation=pronunciation,
+            )
             if not tts_text:
                 raise ValueError(f"Unit {unit_id} has empty tts_text after pronunciation rules")
             unit_ids.add(unit_id)
