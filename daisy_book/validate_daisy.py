@@ -183,7 +183,7 @@ def _validate_opf(
             errors.append(f"OPF spine must reference a SMIL manifest item: {_relative(path, root)}")
     for spine in tree.xpath("//*[local-name()='spine']"):
         toc = spine.get("toc")
-        if not toc or toc not in manifest_ids:
+        if toc and toc not in manifest_ids:
             errors.append(
                 f"OPF spine toc does not resolve in {_relative(path, root)}: {toc or '<missing>'}"
             )

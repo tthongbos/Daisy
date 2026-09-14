@@ -219,13 +219,23 @@ def test_ncx_has_one_human_readable_navigation_point():
     )
 
 
-def test_opf_declares_audio_full_text_metadata_resources_and_smil_spine():
+def test_opf_declares_valid_oeb_1_2_structure_for_audio_full_text():
     root = parse(build_opf(sample_book()["metadata"], "chapter_01", UID, 5100))
     namespaces = {"o": OPF_NS, "dc": "http://purl.org/dc/elements/1.1/"}
     items = {
         item.get("href"): item.get("media-type")
         for item in root.xpath("//o:manifest/o:item", namespaces=namespaces)
     }
+    dc_metadata = root.xpath("//o:metadata/o:dc-metadata", namespaces=namespaces)[0]
+    spine = root.xpath("//o:spine", namespaces=namespaces)[0]
+
+    assert root.nsmap.get(None) == OPF_NS
+    assert root.get("unique-identifier") == "uid"
+    assert root.get("version") is None
+    assert root.nsmap.get("dc") is None
+    assert dc_metadata.nsmap.get("dc") == "http://purl.org/dc/elements/1.1/"
+    assert dc_metadata.nsmap.get("oebpackage") == OPF_NS
+    assert spine.get("toc") is None
 
     assert items == {
         "book.opf": "text/xml",
@@ -234,7 +244,6 @@ def test_opf_declares_audio_full_text_metadata_resources_and_smil_spine():
         "chapter_01.smil": "application/smil",
         "chapter_01.mp3": "audio/mpeg",
     }
-    assert root.xpath("string(//o:spine/@toc)", namespaces=namespaces) == "ncx"
     assert root.xpath("string(//o:spine/o:itemref/@idref)", namespaces=namespaces) == "smil_chapter_01"
     assert root.xpath("string(//dc:Title)", namespaces=namespaces) == "Tâm lý học về tiền"
     assert root.xpath("string(//dc:Creator)", namespaces=namespaces) == "Morgan Housel"

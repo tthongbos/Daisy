@@ -26,12 +26,15 @@ def build_opf(
 ) -> etree._ElementTree:
     root = etree.Element(
         etree.QName(OPF_NS, "package"),
-        nsmap={None: OPF_NS, "dc": DC_NS},
-        version="1.2",
+        nsmap={None: OPF_NS},
         attrib={"unique-identifier": "uid"},
     )
     metadata_element = etree.SubElement(root, etree.QName(OPF_NS, "metadata"))
-    dc_metadata = etree.SubElement(metadata_element, etree.QName(OPF_NS, "dc-metadata"))
+    dc_metadata = etree.SubElement(
+        metadata_element,
+        etree.QName(OPF_NS, "dc-metadata"),
+        nsmap={None: OPF_NS, "dc": DC_NS, "oebpackage": OPF_NS},
+    )
     mappings = (
         ("title", "Title"),
         ("author", "Creator"),
@@ -85,7 +88,7 @@ def build_opf(
             **{"media-type": media_type},
         )
 
-    spine = etree.SubElement(root, etree.QName(OPF_NS, "spine"), toc="ncx")
+    spine = etree.SubElement(root, etree.QName(OPF_NS, "spine"))
     etree.SubElement(
         spine,
         etree.QName(OPF_NS, "itemref"),
