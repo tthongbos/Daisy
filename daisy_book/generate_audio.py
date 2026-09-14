@@ -351,7 +351,11 @@ def generate_section_audio(
     section_dir.mkdir(parents=True, exist_ok=True)
     chapter_path = section_dir / f"{section_id}.mp3"
     temporary = chapter_path.with_name(f".{chapter_path.stem}.part.mp3")
-    chapter_audio.export(temporary, format="mp3", bitrate="64k")
+    
+    # Normalize to DAISY-friendly format: 22050 Hz, mono, 64 kbps
+    normalized_audio = chapter_audio.set_frame_rate(22050).set_channels(1)
+    normalized_audio.export(temporary, format="mp3", bitrate="64k")
+    
     encoded_audio = _load_valid_audio(temporary)
     if encoded_audio is None:
         temporary.unlink(missing_ok=True)
@@ -371,19 +375,92 @@ def generate_section_audio(
     return timing
 
 
+def generate_all_sections(
+    manifest: dict[str, Any],
+    output_dir: Path,
+    voice: str,
+    rate: str,
+    pause_ms: int,
+    max_chars: int,
+    force: bool = False,
+    synthesizer: SynthesisFunction = synthesize_chunk,
+) -> list[dict[str, Any]]:
+    """Generate audio for all sections in manifest order.
+    
+    Returns list of timing dicts for each section in source order.
+    """
+    sections = manifest.get("sections", [])
+    if not isinstance(sections, list) or not sections:
+        raise ValueError("Manifest must contain non-empty sections list")
+    
+    timings: list[dict[str, Any]] = []
+    for section in sections:
+        if not isinstance(section, dict):
+            raise ValueError("Manifest section must be an object")
+        timing = generate_section_audio(
+            section,
+            output_dir,
+            voice,
+            rate,
+            pause_ms,
+            max_chars,
+            force=force,
+            synthesizer=synthesizer,
+        )
+        timings.append(timing)
+    
+    return timings
+
+
+def describe_all_dry_run(manifest: dict[str, Any], max_chars: int) -> dict[str, int]:
+    """Aggregate dry-run statistics for all sections without calling Azure."""
+    sections = manifest.get("sections", [])
+    if not isinstance(sections, list) or not sections:
+        raise ValueError("Manifest must contain non-empty sections list")
+    
+    total_units = 0
+    total_characters = 0
+    total_requests = 0
+    
+    print("Dry run: all sections")
+    for section in sections:
+        validate_section(section)
+        section_id = section["id"]
+        units = section["units"]
+        section_chars = sum(len(unit["tts_text"]) for unit in units)
+        section_requests = sum(len(chunk_text(unit["tts_text"], max_chars)) for unit in units)
+        
+        total_units += len(units)
+        total_characters += section_chars
+        total_requests += section_requests
+        
+        print(f"  {section_id}: {len(units)} units, {section_chars} chars, {section_requests} requests")
+    
+    print(f"Total: {total_units} units, {total_characters} characters, {total_requests} requests")
+    return {
+        "unit_count": total_units,
+        "total_characters": total_characters,
+        "request_count": total_requests,
+    }
+
+
 def main() -> int:
     load_dotenv()
-    parser = argparse.ArgumentParser(description="Generate one section MP3 with unit timing using Azure TTS.")
+    parser = argparse.ArgumentParser(description="Generate section MP3 files with unit timing using Azure TTS.")
     parser.add_argument("--manifest", default="build/tts/manifest.json", type=Path)
-    parser.add_argument("--section", required=True, help="Section id, for example chapter_01 or introduction")
+    
+    # Make --section and --all mutually exclusive
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--section", help="Section id, for example chapter_01 or introduction")
+    group.add_argument("--all", action="store_true", help="Generate all sections in manifest order")
+    
     parser.add_argument("--output-dir", default="build/audio", type=Path)
     parser.add_argument("--dry-run", action="store_true", help="Validate and show requests without calling Azure")
-    parser.add_argument("--force", action="store_true", help="Regenerate all unit audio in the selected section")
+    parser.add_argument("--force", action="store_true", help="Regenerate all unit audio in selected section(s)")
     args = parser.parse_args()
 
     try:
         manifest = load_manifest(args.manifest)
-        section = select_section(manifest, args.section)
         tts = load_tts_config()
         voice = os.getenv("AZURE_SPEECH_VOICE", "").strip() or str(
             tts.get("voice", "vi-VN-HoaiMyNeural")
@@ -391,18 +468,34 @@ def main() -> int:
         rate = str(tts.get("rate", "-5%"))
         pause_ms = int(tts.get("pause_ms", 350))
         max_chars = int(tts.get("max_chars_per_request", 2500))
-        if args.dry_run:
-            describe_dry_run(section, max_chars)
-            return 0
-        generate_section_audio(
-            section,
-            args.output_dir,
-            voice,
-            rate,
-            pause_ms,
-            max_chars,
-            force=args.force,
-        )
+        
+        if args.all:
+            if args.dry_run:
+                describe_all_dry_run(manifest, max_chars)
+                return 0
+            generate_all_sections(
+                manifest,
+                args.output_dir,
+                voice,
+                rate,
+                pause_ms,
+                max_chars,
+                force=args.force,
+            )
+        else:
+            section = select_section(manifest, args.section)
+            if args.dry_run:
+                describe_dry_run(section, max_chars)
+                return 0
+            generate_section_audio(
+                section,
+                args.output_dir,
+                voice,
+                rate,
+                pause_ms,
+                max_chars,
+                force=args.force,
+            )
     except (OSError, ValueError, RuntimeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

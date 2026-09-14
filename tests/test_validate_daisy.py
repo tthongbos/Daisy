@@ -57,8 +57,8 @@ def test_rejects_uid_mismatch_and_invalid_clip(tmp_path):
     uid = tree.xpath("//*[local-name()='meta'][@name='dtb:uid']")[0]
     uid.set("content", "urn:uuid:different")
     audio = tree.xpath("//*[local-name()='audio']")[0]
-    audio.set("clipBegin", "npt=2.000s")
-    audio.set("clipEnd", "npt=1.000s")
+    audio.set("clipBegin", "0:00:02.000")
+    audio.set("clipEnd", "0:00:01.000")
     tree.write(str(smil_path), encoding="utf-8", xml_declaration=True)
 
     errors, _ = validate_daisy(output)
@@ -172,8 +172,8 @@ def test_rejects_missing_smil_audio_and_nonmonotonic_or_overlong_timing(tmp_path
     tree = etree.parse(str(smil_path))
     audio_elements = tree.xpath("//*[local-name()='audio']")
     audio_elements[0].getparent().remove(audio_elements[0])
-    audio_elements[2].set("clipBegin", "npt=0.500s")
-    audio_elements[-1].set("clipEnd", "npt=5.200s")
+    audio_elements[2].set("clipBegin", "0:00:00.500")
+    audio_elements[-1].set("clipEnd", "0:00:05.200")
     tree.write(str(smil_path), encoding="utf-8", xml_declaration=True)
 
     errors, _ = validate_daisy(output)

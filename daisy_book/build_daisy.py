@@ -12,9 +12,9 @@ from typing import Any
 
 from lxml import etree
 
-from .dtbook import build_dtbook
-from .navigation import build_ncx
-from .opf import build_opf, format_duration
+from .dtbook import build_dtbook, build_dtbook_multi
+from .navigation import build_ncx, build_ncx_multi
+from .opf import build_opf, build_opf_multi, format_duration
 from .smil import build_smil
 from .validate_daisy import validate_daisy
 
@@ -310,35 +310,189 @@ def build_daisy(
     return BuildResult(section_id, len(units), duration_ms, uid, output_dir)
 
 
+def build_daisy_multi(
+    book_path: Path,
+    manifest_path: Path,
+    audio_dir: Path,
+    output_dir: Path,
+) -> BuildResult:
+    """Build full-book DAISY with all sections from book.json and audio_dir.
+    
+    Returns aggregated BuildResult with total unit_count and duration_ms.
+    """
+    book = _load_json(book_path, "structured book")
+    manifest = _load_json(manifest_path, "TTS manifest")
+    metadata = book.get("metadata")
+    if not isinstance(metadata, dict):
+        raise ValueError("book.json metadata must be an object")
+    
+    # Validate and load all sections
+    all_sections = []
+    all_sections_with_units = []
+    total_duration_ms = 0
+    total_unit_count = 0
+    section_durations: list[int] = []
+    
+    for section_data in book.get("sections", []):
+        section_id = section_data.get("id")
+        if not section_id:
+            raise ValueError("Book section missing id")
+        
+        timing_path = audio_dir / section_id / f"{section_id}_timing.json"
+        audio_path = audio_dir / section_id / f"{section_id}.mp3"
+        
+        # Load and validate
+        timing = _load_json(timing_path, f"{section_id} timing")
+        if not audio_path.is_file():
+            raise FileNotFoundError(f"Missing audio: {audio_path}")
+        
+        section, units = validate_source_relationships(
+            book, manifest, timing, section_id
+        )
+        
+        all_sections.append(section)
+        all_sections_with_units.append((section, units))
+        duration_ms = _require_integer(timing.get("duration_ms"), f"{section_id} duration_ms")
+        total_duration_ms += duration_ms
+        section_durations.append(duration_ms)
+        total_unit_count += len(units)
+    
+    if not all_sections:
+        raise ValueError("No sections found in book.json")
+    
+    # Setup staging/backup/restore
+    uid = resolve_book_uid(metadata)
+    output_dir = output_dir.resolve()
+    parent = output_dir.parent
+    parent.mkdir(parents=True, exist_ok=True)
+    staging = parent / f".{output_dir.name}.tmp"
+    backup = parent / f".{output_dir.name}.backup"
+    
+    if staging.exists():
+        shutil.rmtree(staging)
+    if backup.exists():
+        shutil.rmtree(backup)
+    
+    try:
+        staging.mkdir()
+        
+        # Build aggregate DTBook with one level1 per section
+        _write_xml(
+            staging / "book.xml",
+            build_dtbook_multi(metadata, all_sections_with_units, uid),
+            DTBOOK_DOCTYPE
+        )
+        
+        # Build aggregate NCX with one navPoint per section
+        _write_xml(
+            staging / "book.ncx",
+            build_ncx_multi(metadata, all_sections, uid),
+            NCX_DOCTYPE
+        )
+        
+        # Build aggregate OPF with all SMILs in manifest/spine
+        section_ids = [s["id"] for s in all_sections]
+        _write_xml(
+            staging / "book.opf",
+            build_opf_multi(metadata, section_ids, section_durations, uid),
+            OPF_DOCTYPE
+        )
+        
+        # Build SMIL for each section and copy MP3
+        for section_id, section in zip(section_ids, all_sections):
+            timing = _load_json(
+                audio_dir / section_id / f"{section_id}_timing.json",
+                "timing"
+            )
+            
+            _write_xml(
+                staging / f"{section_id}.smil",
+                build_smil(section_id, timing, uid),
+                SMIL_DOCTYPE
+            )
+            
+            audio_src = audio_dir / section_id / f"{section_id}.mp3"
+            shutil.copyfile(audio_src, staging / f"{section_id}.mp3")
+        
+        # Validate full DAISY
+        errors, warnings = validate_daisy(staging)
+        if errors:
+            raise ValueError("Generated DAISY validation failed: " + "; ".join(errors))
+        
+        # Atomic swap
+        if output_dir.exists():
+            if not output_dir.is_dir():
+                raise ValueError(f"DAISY output exists and is not a directory: {output_dir}")
+            output_dir.replace(backup)
+        try:
+            staging.replace(output_dir)
+        except Exception:
+            if backup.exists() and not output_dir.exists():
+                backup.replace(output_dir)
+            raise
+        if backup.exists():
+            shutil.rmtree(backup)
+            
+    except Exception:
+        if staging.exists():
+            shutil.rmtree(staging)
+        raise
+    
+    return BuildResult("all", total_unit_count, total_duration_ms, uid, output_dir)
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Build a DAISY 3 Chapter 1 sample from local artifacts.")
+    parser = argparse.ArgumentParser(description="Build DAISY 3 from local artifacts.")
     parser.add_argument("--book", default="build/structured/book.json", type=Path)
     parser.add_argument("--manifest", default="build/tts/manifest.json", type=Path)
     parser.add_argument("--audio-dir", default="build/audio", type=Path)
     parser.add_argument("--output", default="build/daisy", type=Path)
-    parser.add_argument("--section", default="chapter_01")
+    
+    # Mutually exclusive: --section or --all
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--section", default=None, help="Single section id (e.g., chapter_01)")
+    group.add_argument("--all", action="store_true", help="Build all sections")
+    
     args = parser.parse_args(argv)
+    
+    # Default to chapter_01 if neither flag specified
+    use_all = args.all
+    section_id = args.section or "chapter_01"
 
     try:
-        result = build_daisy(
-            args.book,
-            args.manifest,
-            args.audio_dir,
-            args.output,
-            args.section,
-        )
+        if use_all:
+            result = build_daisy_multi(
+                args.book,
+                args.manifest,
+                args.audio_dir,
+                args.output,
+            )
+        else:
+            result = build_daisy(
+                args.book,
+                args.manifest,
+                args.audio_dir,
+                args.output,
+                section_id,
+            )
     except (OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-    print("Built DAISY 3 sample")
-    print(f"section: {result.section_id}")
+    print("Built DAISY 3")
+    if use_all:
+        print(f"mode: full-book (all sections)")
+    else:
+        print(f"section: {result.section_id}")
     print(f"units: {result.unit_count}")
     print(f"duration: {format_duration(result.duration_ms)}")
     print(f"uid: {result.uid}")
     print(f"output: {result.output_dir}")
-    for name in ("book.xml", f"{result.section_id}.smil", "book.ncx", "book.opf", f"{result.section_id}.mp3"):
-        print(name)
+    
+    # List all output files
+    if result.output_dir.exists():
+        for name in sorted(result.output_dir.iterdir()):
+            print(name.name)
     return 0
 
 

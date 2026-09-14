@@ -10,7 +10,10 @@ from lxml import etree
 
 XML_EXTENSIONS = {".xml", ".smil", ".ncx", ".opf"}
 XML_ID = "{http://www.w3.org/XML/1998/namespace}id"
-SMIL_CLOCK = re.compile(r"^npt=(\d+(?:\.\d+)?)s$")
+# Colon-clock format: H:MM:SS.mmm (EasyReader-compatible, not npt=)
+SMIL_CLOCK = re.compile(r"^(\d+):(\d{2}):(\d{2})(?:\.(\d{1,3}))?$")
+# Reject npt= format (EasyReader interoperability issue)
+NPT_CLOCK = re.compile(r"^npt=")
 DAISY_TIME = re.compile(r"^(\d+):(\d{2}):(\d{2})(?:\.(\d{1,3}))?$")
 
 
@@ -48,8 +51,18 @@ def _document_ids(
 
 
 def _parse_smil_clock(value: str) -> float | None:
-    match = SMIL_CLOCK.fullmatch(value.strip())
-    return float(match.group(1)) if match else None
+    value = value.strip()
+    # Reject npt= format for EasyReader interoperability
+    if NPT_CLOCK.match(value):
+        return None
+    match = SMIL_CLOCK.fullmatch(value)
+    if not match:
+        return None
+    hours, minutes, seconds, milliseconds = match.groups()
+    if int(minutes) >= 60 or int(seconds) >= 60:
+        return None
+    fraction = int((milliseconds or "0").ljust(3, "0")) / 1000
+    return int(hours) * 3600 + int(minutes) * 60 + int(seconds) + fraction
 
 
 def _parse_daisy_time(value: str) -> float | None:

@@ -159,7 +159,11 @@ def test_smil_maps_each_timing_unit_exactly():
     root = parse(build_smil("chapter_01", sample_timing(), UID))
     namespaces = {"s": SMIL_NS}
 
-    assert ms_to_smil_clock(8450) == "npt=8.450s"
+    assert ms_to_smil_clock(0) == "0:00:00.000"
+    assert ms_to_smil_clock(3590) == "0:00:03.590"
+    assert ms_to_smil_clock(14126) == "0:00:14.126"
+    assert ms_to_smil_clock(61500) == "0:01:01.500"
+    assert ms_to_smil_clock(3_661_001) == "1:01:01.001"
     assert root.get("version") is None
     assert root.xpath("name(s:head)", namespaces=namespaces) == "head"
     assert root.xpath("name(s:body)", namespaces=namespaces) == "body"
@@ -184,14 +188,14 @@ def test_smil_maps_each_timing_unit_exactly():
         "chapter_01.mp3",
     ]
     assert root.xpath("//s:par/s:audio/@clipBegin", namespaces=namespaces) == [
-        "npt=0.000s",
-        "npt=1.300s",
-        "npt=2.800s",
+        "0:00:00.000",
+        "0:00:01.300",
+        "0:00:02.800",
     ]
     assert root.xpath("//s:par/s:audio/@clipEnd", namespaces=namespaces) == [
-        "npt=1.000s",
-        "npt=2.500s",
-        "npt=5.000s",
+        "0:00:01.000",
+        "0:00:02.500",
+        "0:00:05.000",
     ]
 
 
@@ -373,3 +377,17 @@ def test_rejects_manifest_timing_mismatches(failure):
 
     with pytest.raises(ValueError, match="Timing unit IDs/order|Duplicate timing unit id"):
         validate_source_relationships(sample_book(), sample_manifest(), timing, "chapter_01")
+
+
+def test_generated_smil_does_not_contain_npt_format_for_easyreader_compatibility(tmp_path):
+    """Regression test: EasyReader fails with npt= clock format.
+    Generated SMIL must use colon-clock format H:MM:SS.mmm instead."""
+    book_path, manifest_path, audio_dir, _ = write_inputs(tmp_path)
+    output = tmp_path / "daisy"
+
+    build_daisy(book_path, manifest_path, audio_dir, output, "chapter_01")
+
+    smil_text = (output / "chapter_01.smil").read_text(encoding="utf-8")
+    assert "npt=" not in smil_text
+    # Verify colon-clock format is present
+    assert "0:00:" in smil_text

@@ -11,7 +11,11 @@ SMIL_NS = "http://www.w3.org/2001/SMIL20/"
 def ms_to_smil_clock(milliseconds: int) -> str:
     if not isinstance(milliseconds, int) or isinstance(milliseconds, bool) or milliseconds < 0:
         raise ValueError("SMIL clock milliseconds must be a non-negative integer")
-    return f"npt={milliseconds / 1000:.3f}s"
+    # Convert milliseconds to colon-clock format H:MM:SS.mmm using integer arithmetic
+    total_seconds, millis = divmod(milliseconds, 1000)
+    minutes, seconds = divmod(total_seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours}:{minutes:02d}:{seconds:02d}.{millis:03d}"
 
 
 def build_smil(

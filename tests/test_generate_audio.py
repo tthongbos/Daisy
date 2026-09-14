@@ -6,7 +6,9 @@ from pydub import AudioSegment
 from pydub.generators import Sine
 
 from daisy_book.generate_audio import (
+    describe_all_dry_run,
     describe_dry_run,
+    generate_all_sections,
     generate_section_audio,
     main,
     select_section,
@@ -242,3 +244,87 @@ def test_chunk_cache_invalidates_when_voice_changes(tmp_path):
     assert first_call_count > 1
     assert len(calls) == first_call_count * 2
     assert (tmp_path / "unit_1" / "chunk_0001.meta.json").is_file()
+
+
+def test_all_sections_dry_run_aggregates_statistics_without_azure_calls(capsys):
+    """Test --all --dry-run aggregates stats for all sections without calling Azure."""
+    manifest = {
+        "metadata": {"title": "Test", "author": "Author"},
+        "sections": [
+            {
+                "id": "intro",
+                "type": "introduction",
+                "units": [
+                    {"id": "intro_p1", "type": "paragraph", "tts_text": "Intro text."},
+                ],
+            },
+            {
+                "id": "chapter_01",
+                "type": "chapter",
+                "units": [
+                    {"id": "ch1_p1", "type": "paragraph", "tts_text": "Chapter one."},
+                    {"id": "ch1_p2", "type": "paragraph", "tts_text": "Paragraph two."},
+                ],
+            },
+        ],
+    }
+    
+    result = describe_all_dry_run(manifest, max_chars=2500)
+    
+    assert result["unit_count"] == 3
+    assert result["total_characters"] == len("Intro text.") + len("Chapter one.") + len("Paragraph two.")
+    assert result["request_count"] == 3  # 3 units, each fits in one request
+    
+    captured = capsys.readouterr()
+    assert "Dry run: all sections" in captured.out
+    assert "intro: 1 units" in captured.out
+    assert "chapter_01: 2 units" in captured.out
+    assert "Total: 3 units" in captured.out
+
+
+def test_generate_all_sections_produces_audio_for_each_section_in_order(tmp_path):
+    """Test that --all generates audio for all sections in manifest order."""
+    def fake_synthesizer(ssml, output, voice):
+        Sine(440).to_audio_segment(duration=100).export(output, format="mp3", bitrate="64k")
+    
+    manifest = {
+        "metadata": {"title": "Test", "author": "Author"},
+        "sections": [
+            {
+                "id": "intro",
+                "type": "introduction",
+                "units": [
+                    {"id": "intro_p1", "type": "paragraph", "tts_text": "Intro text."},
+                ],
+            },
+            {
+                "id": "chapter_01",
+                "type": "chapter",
+                "units": [
+                    {"id": "ch1_p1", "type": "paragraph", "tts_text": "Chapter one."},
+                ],
+            },
+        ],
+    }
+    
+    timings = generate_all_sections(
+        manifest,
+        tmp_path,
+        "voice",
+        "-5%",
+        350,
+        2500,
+        force=False,
+        synthesizer=fake_synthesizer,
+    )
+    
+    # Should return list of timing dicts in order
+    assert len(timings) == 2
+    assert timings[0]["section_id"] == "intro"
+    assert timings[1]["section_id"] == "chapter_01"
+    
+    # Verify audio files were created
+    assert (tmp_path / "intro" / "intro.mp3").exists()
+    assert (tmp_path / "chapter_01" / "chapter_01.mp3").exists()
+    assert (tmp_path / "intro" / "intro_timing.json").exists()
+    assert (tmp_path / "chapter_01" / "chapter_01_timing.json").exists()

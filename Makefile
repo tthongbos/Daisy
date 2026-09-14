@@ -1,7 +1,7 @@
 PYTHON ?= python
 SOURCE ?= data/source/tam-ly-hoc-ve-tien.epub
 
-.PHONY: setup metadata extract prepare-tts tts-audit tts tts-dry-run build-daisy validate package test
+.PHONY: setup metadata extract prepare-tts tts-audit tts tts-dry-run build-daisy validate package test tts-all full-book-dry-run build-daisy-all validate-all package-all full-book
 
 setup:
 	$(PYTHON) -m venv .venv
@@ -38,6 +38,29 @@ validate:
 
 package:
 	$(PYTHON) -m daisy_book.package_daisy --input build/daisy
+
+## Full-book targets (all sections)
+tts-all: prepare-tts
+	$(PYTHON) -m daisy_book.generate_audio --manifest build/tts/manifest.json --all --output-dir build/audio
+
+full-book-dry-run: prepare-tts
+	$(PYTHON) -m daisy_book.generate_audio --manifest build/tts/manifest.json --all --output-dir build/audio --dry-run
+
+build-daisy-all: tts-all
+	$(PYTHON) -m daisy_book.build_daisy \
+		--book build/structured/book.json \
+		--manifest build/tts/manifest.json \
+		--audio-dir build/audio \
+		--output build/daisy \
+		--all
+
+validate-all: build-daisy-all
+	$(PYTHON) -m daisy_book.validate_daisy --input build/daisy
+
+package-all: validate-all
+	$(PYTHON) -m daisy_book.package_daisy --input build/daisy --name Tam_ly_hoc_ve_tien_DAISY3
+
+full-book: extract prepare-tts tts-audit tts-all build-daisy-all validate-all package-all
 
 test:
 	pytest -q
