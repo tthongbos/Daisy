@@ -1,9 +1,6 @@
 # Chỉ ảnh hưởng text gửi vào TTS. Không thay đổi text hiển thị trong DTBook.
-# Hãy nghe thử trước khi thêm phiên âm.
+# Chỉ giữ các ngoại lệ có cấu trúc rõ ràng, không lập bản dịch cho tên tiếng Anh thường lệ.
 replacements:
-  "Morgan Housel": "Mo-gân Hao-sồ"
-  "Warren Buffett": "O-ren Ba-phét"
   "S&P 500": "S and P năm trăm"
-  "USD": "đô la Mỹ"
   "KIẾM TIỀN >< GIỮ TIỀN": "Kiếm tiền khác với giữ tiền"
   "HỢP LÝ > CÓ LÝ": "Hợp lý quan trọng hơn có lý"

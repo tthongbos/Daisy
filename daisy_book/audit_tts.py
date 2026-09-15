@@ -25,6 +25,7 @@ KNOWN_RISKY_TOKENS = (
     "S&P 500",
     "Roth IRA",
     "401(k)",
+    "401 (k)",
     "ARPANET",
     "GEICO",
     "NAFTA",
@@ -109,10 +110,16 @@ def _excerpt(text: str, token: str, limit: int = 160) -> str:
 
 def _known_unmapped_tokens(display_text: str, tts_text: str) -> Iterator[str]:
     occupied: list[tuple[int, int]] = []
+    special_formed_tokens = {
+        "401(k)": "bốn không một k",
+        "401 (k)": "bốn không một k",
+    }
     for token in KNOWN_RISKY_TOKENS:
         for match in re.finditer(re.escape(token), display_text):
             occupied.append(match.span())
             if token in tts_text:
+                yield token
+            elif token in special_formed_tokens and special_formed_tokens[token] in tts_text:
                 yield token
     for match in ACRONYM_RE.finditer(display_text):
         if any(start <= match.start() and match.end() <= end for start, end in occupied):

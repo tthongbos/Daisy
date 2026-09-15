@@ -42,19 +42,66 @@ def test_normalize_for_tts_does_not_lowercase_body_text():
 @pytest.mark.parametrize(
     ("source", "expected"),
     [
-        ("84.5", "84 phẩy 5"),
-        ("3.000", "3000"),
-        ("134.217.728", "134217728"),
-        ("99.9%", "99 phẩy 9 phần trăm"),
-        ("0,00000001%", "0 phẩy 00000001 phần trăm"),
-        ("$3.000", "3000 đô la"),
-        ("$0.25", "0 phẩy 25 đô la"),
-        ("180kg", "180 kg"),
-        ("1GB", "1 GB"),
+        ("0", "không"),
+        ("4", "bốn"),
+        ("14", "mười bốn"),
+        ("40", "bốn mươi"),
+        ("140", "một trăm bốn mươi"),
+        ("145", "một trăm bốn mươi lăm"),
+        ("3.000", "ba nghìn"),
+        (
+            "134.217.728",
+            "một trăm ba mươi bốn triệu hai trăm mười bảy nghìn bảy trăm hai mươi tám",
+        ),
+        ("84.5", "tám mươi bốn phẩy năm"),
+        ("0.25", "không phẩy hai năm"),
+        (
+            "0.000000001",
+            "không phẩy không không không không không không không không một",
+        ),
+        ("140%", "một trăm bốn mươi phần trăm"),
+        (
+            "0,00000001%",
+            "không phẩy không không không không không không không một phần trăm",
+        ),
+        ("$3.000", "ba nghìn đô la"),
+        ("$0.25", "không phẩy hai năm đô la"),
+        ("180kg", "một trăm tám mươi ki-lô-gam"),
+        ("1GB", "một ghi-ga-bai"),
+        ("vài cm", "vài xen-ti-mét"),
+        ("5cm", "năm xen-ti-mét"),
+        ("1.670 m2", "một nghìn sáu trăm bảy mươi mét vuông"),
     ],
 )
-def test_normalize_for_tts_handles_safe_numeric_forms(source, expected):
+def test_normalize_for_tts_speaks_numbers_and_units_in_vietnamese(source, expected):
     assert normalize_for_tts(source) == expected
+
+
+def test_140_is_not_left_for_azure_to_guess():
+    result = normalize_for_tts("mức tăng 140%")
+    assert result == "mức tăng một trăm bốn mươi phần trăm"
+    assert "140" not in result
+
+
+def test_prepare_manifest_keeps_display_text_while_normalizing_tts():
+    source = "Mức tăng 140% và dày vài cm."
+    manifest = {
+        "metadata": {"title": "Test"},
+        "sections": [
+            {
+                "id": "s1",
+                "type": "chapter",
+                "number": "1",
+                "title": "Giới thiệu",
+                "blocks": [{"id": "b1", "type": "paragraph", "display_text": source}],
+            }
+        ],
+    }
+
+    prepared = __import__("daisy_book.prepare_tts", fromlist=["prepare_manifest"]).prepare_manifest(manifest, {})
+    unit = next(unit for unit in prepared["sections"][0]["units"] if unit["id"] == "b1")
+    assert unit["display_text"] == source
+    assert unit["tts_text"] == "Mức tăng một trăm bốn mươi phần trăm và dày vài xen-ti-mét."
 
 
 def test_normalize_for_tts_preserves_normal_vietnamese_punctuation():
@@ -75,6 +122,61 @@ def test_normalize_for_tts_uses_exact_phrase_override_before_symbol_handling(sou
         unit_type="heading",
         pronunciation={source: spoken},
     ) == spoken
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("140%", "một trăm bốn mươi phần trăm"),
+        ("0.000000001", "không phẩy không không không không không không không không một"),
+        ("vài cm", "vài xen-ti-mét"),
+        ("180kg", "một trăm tám mươi ki-lô-gam"),
+        ("1.670 m2", "một nghìn sáu trăm bảy mươi mét vuông"),
+        ("1GB", "một ghi-ga-bai"),
+        ("1/4", "một phần tư"),
+        ("3/4", "ba phần tư"),
+        ("⅓", "một phần ba"),
+        ("24/7", "hai mươi bốn giờ một ngày, bảy ngày một tuần"),
+        ("11/9", "ngày mười một tháng chín"),
+        ("50/50", "năm mươi năm mươi"),
+        ("10x", "gấp mười lần"),
+        ("10x – 20x", "gấp mười đến hai mươi lần"),
+        ("8 + 8", "tám cộng tám"),
+        ("8 × 8", "tám nhân tám"),
+        ("37.7–40°C", "từ ba mươi bảy phẩy bảy đến bốn mươi độ C"),
+        ("525-7851", "năm hai năm, bảy tám năm một"),
+    ],
+)
+def test_normalize_for_tts_handles_special_symbolic_expressions(source, expected):
+    assert normalize_for_tts(source) == expected
+
+
+def test_normalize_for_tts_leaves_ordinary_english_alone():
+    assert normalize_for_tts("Bill Gates dùng Gmail.") == "Bill Gates dùng Gmail."
+    assert normalize_for_tts("CEO của IBM") == "CEO của IBM"
+    assert normalize_for_tts("Warren Buffett") == "Warren Buffett"
+    assert normalize_for_tts("Wi-Fi") == "Wi-Fi"
+
+
+def test_prepare_manifest_keeps_display_text_when_special_symbols_are_normalized():
+    source = "Bill Gates nói mức tăng 140%, căn phòng rộng 90m2."
+    manifest = {
+        "metadata": {"title": "Test"},
+        "sections": [
+            {
+                "id": "s1",
+                "type": "chapter",
+                "number": "1",
+                "title": "Giới thiệu",
+                "blocks": [{"id": "b1", "type": "paragraph", "display_text": source}],
+            }
+        ],
+    }
+
+    prepared = __import__("daisy_book.prepare_tts", fromlist=["prepare_manifest"]).prepare_manifest(manifest, {})
+    unit = next(unit for unit in prepared["sections"][0]["units"] if unit["id"] == "b1")
+    assert unit["display_text"] == source
+    assert unit["tts_text"] == "Bill Gates nói mức tăng một trăm bốn mươi phần trăm, căn phòng rộng chín mươi mét vuông."
 
 
 def test_chunk_text_respects_limit_for_normal_words():
