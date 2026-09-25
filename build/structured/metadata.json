@@ -3,9 +3,18 @@
   "author": "Morgan Housel",
   "translator": "Hoàng Thị Minh Phúc",
   "language": "vi",
-  "subject": "Tâm lý học & Phát triển cá nhân",
-  "publisher": null,
-  "date": null,
-  "isbn": null,
-  "description": null
+  "subject": "Kinh tế & Kinh doanh",
+  "description": "Tâm lý học về tiền là cuốn sách giúp người đọc hiểu rõ hơn cách suy nghĩ và hành vi của con người ảnh hưởng đến việc kiếm tiền, sử dụng tiền và xây dựng sự ổn định tài chính.",
+  "source": {
+    "publisher": "NXB Dân Trí",
+    "date": "2021-01-01",
+    "isbn": "978-604-314-015-6",
+    "url": "https://1980books.com/products/sach-tam-ly-hoc-ve-tien-bia-mem-1980books",
+    "edition": null,
+    "rights": null
+  },
+  "daisy": {
+    "producer": "tthongbos/Daisy",
+    "generator": "daisy-psychology-of-money 0.1.0"
+  }
 }

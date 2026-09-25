@@ -162,16 +162,60 @@ def normalized_metadata(source: EpubMetadata, overrides: dict[str, object]) -> d
             return normalize_text(value)
         return fallback
 
+    def preferred_nested(mapping: dict[str, object], key: str, fallback: str | None) -> str | None:
+        value = mapping.get(key)
+        if isinstance(value, str) and value.strip():
+            return normalize_text(value)
+        return fallback
+
+    metadata_overrides = overrides if isinstance(overrides, dict) else {}
+    source_overrides = metadata_overrides.get("source")
+    daisy_overrides = metadata_overrides.get("daisy")
+    source_override_dict = source_overrides if isinstance(source_overrides, dict) else {}
+    daisy_override_dict = daisy_overrides if isinstance(daisy_overrides, dict) else {}
+
+    if not source_override_dict:
+        source_override_dict = {
+            key: metadata_overrides[key]
+            for key in ("publisher", "date", "isbn", "url", "edition", "rights")
+            if key in metadata_overrides
+        }
+
+    source_isbn = preferred_nested(source_override_dict, "isbn", None)
+    if source_isbn is None:
+        for identifier in source.identifiers:
+            normalized = normalize_isbn(identifier)
+            if normalized is not None:
+                source_isbn = identifier.strip()
+                break
+    if source_isbn is None and "isbn" in metadata_overrides and isinstance(metadata_overrides["isbn"], str):
+        source_isbn = str(metadata_overrides["isbn"]).strip()
+
+    source_date = preferred_nested(source_override_dict, "date", source.date)
+    source_publisher = preferred_nested(source_override_dict, "publisher", source.publisher)
+    source_rights = preferred_nested(source_override_dict, "rights", source.rights)
+    source_url = preferred_nested(source_override_dict, "url", None)
+    source_edition = preferred_nested(source_override_dict, "edition", None)
+
     metadata: dict[str, object] = {
         "title": preferred("title", source.title),
         "author": preferred("creator", source.authors[0] if source.authors else None),
         "translator": preferred("translator", source.translators[0] if source.translators else None),
         "language": preferred("language", source.language),
-        "subject": preferred("subject", None),
-        "publisher": preferred("publisher", None),
-        "date": preferred("date", None),
-        "isbn": preferred("isbn", None),
-        "description": preferred("description", None),
+        "subject": preferred("subject", source.subject),
+        "description": preferred("description", source.description),
+        "source": {
+            "publisher": source_publisher,
+            "date": source_date,
+            "isbn": source_isbn,
+            "url": source_url,
+            "edition": source_edition,
+            "rights": source_rights,
+        },
+        "daisy": {
+            "producer": preferred_nested(daisy_override_dict, "producer", None),
+            "generator": preferred_nested(daisy_override_dict, "generator", None),
+        },
     }
     return metadata
 

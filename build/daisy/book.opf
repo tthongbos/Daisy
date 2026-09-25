@@ -5,18 +5,24 @@
     <dc-metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:oebpackage="http://openebook.org/namespaces/oeb-package/1.0/">
       <dc:Title>Tâm lý học về tiền</dc:Title>
       <dc:Creator>Morgan Housel</dc:Creator>
-      <dc:Subject>Tâm lý học &amp; Phát triển cá nhân</dc:Subject>
       <dc:Contributor>Hoàng Thị Minh Phúc</dc:Contributor>
-      <dc:Identifier id="uid">urn:uuid:3bc6e63e-e3ad-5937-a882-fcef6aead942</dc:Identifier>
       <dc:Language>vi</dc:Language>
+      <dc:Subject>Kinh tế &amp; Kinh doanh</dc:Subject>
+      <dc:Description>Tâm lý học về tiền là cuốn sách giúp người đọc hiểu rõ hơn cách suy nghĩ và hành vi của con người ảnh hưởng đến việc kiếm tiền, sử dụng tiền và xây dựng sự ổn định tài chính.</dc:Description>
+      <dc:Source>urn:isbn:9786043140156</dc:Source>
+      <dc:Identifier id="uid">urn:uuid:78801b41-22ae-5902-bc73-3d27ed3f8de3</dc:Identifier>
       <dc:Format>ANSI/NISO Z39.86-2005</dc:Format>
     </dc-metadata>
     <x-metadata>
-      <meta name="dtb:uid" content="urn:uuid:3bc6e63e-e3ad-5937-a882-fcef6aead942"/>
+      <meta name="dtb:uid" content="urn:uuid:78801b41-22ae-5902-bc73-3d27ed3f8de3"/>
       <meta name="dtb:multimediaType" content="audioFullText"/>
       <meta name="dtb:multimediaContent" content="audio,text"/>
       <meta name="dtb:audioFormat" content="MP3"/>
       <meta name="dtb:totalTime" content="00:19:51.536"/>
+      <meta name="dtb:sourcePublisher" content="NXB Dân Trí"/>
+      <meta name="dtb:sourceDate" content="2021-01-01"/>
+      <meta name="dtb:producer" content="tthongbos/Daisy"/>
+      <meta name="dtb:generator" content="daisy-psychology-of-money 0.1.0"/>
     </x-metadata>
   </metadata>
   <manifest>

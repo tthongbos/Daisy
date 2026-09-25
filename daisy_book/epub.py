@@ -16,6 +16,47 @@ DC_NS = "http://purl.org/dc/elements/1.1/"
 OPF_NS = "http://www.idpf.org/2007/opf"
 
 
+def normalize_isbn(value: str | object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    candidate = value.strip()
+    if not candidate:
+        return None
+    candidate = candidate.removeprefix("urn:isbn:").strip()
+    candidate = re.sub(r"^isbn\s*", "", candidate, flags=re.IGNORECASE).strip()
+    candidate = re.sub(r"[^0-9Xx]", "", candidate)
+    if not candidate:
+        return None
+
+    def isbn13_is_valid(number: str) -> bool:
+        if len(number) != 13 or not number.isdigit():
+            return False
+        total = sum((1 if index % 2 == 0 else 3) * int(digit) for index, digit in enumerate(number))
+        return total % 10 == 0
+
+    def isbn10_to_isbn13(number: str) -> str | None:
+        if len(number) != 10 or not number[:-1].isdigit() or not (number[-1].isdigit() or number[-1].lower() == "x"):
+            return None
+        checksum = 0
+        for index, digit in enumerate(number[:-1]):
+            checksum += int(digit) * (10 - index)
+        check_digit = (11 - (checksum % 11)) % 11
+        if check_digit == 10:
+            check_digit = "X"
+        else:
+            check_digit = str(check_digit)
+        if str(number[-1]).upper() != str(check_digit):
+            return None
+        return "978" + number[:-1]
+
+    if isbn13_is_valid(candidate):
+        return candidate
+    converted = isbn10_to_isbn13(candidate)
+    if converted is not None and isbn13_is_valid(converted):
+        return converted
+    return None
+
+
 @dataclass(frozen=True)
 class EpubMetadata:
     title: str | None
@@ -24,6 +65,11 @@ class EpubMetadata:
     translators: tuple[str, ...]
     language: str | None
     identifiers: tuple[str, ...]
+    publisher: str | None = None
+    date: str | None = None
+    subject: str | None = None
+    description: str | None = None
+    rights: str | None = None
 
 
 @dataclass(frozen=True)
@@ -78,6 +124,8 @@ def _parse_metadata(opf: etree._Element) -> EpubMetadata:
         for element in opf.xpath("./opf:metadata/dc:identifier", namespaces=namespaces)
         if (value := _text(element))
     )
+    subject_elements = opf.xpath("./opf:metadata/dc:subject", namespaces=namespaces)
+    subjects = tuple(value for element in subject_elements if (value := _text(element)))
     return EpubMetadata(
         title=_text(opf.find("./opf:metadata/dc:title", namespaces)),
         creators=creators,
@@ -85,6 +133,11 @@ def _parse_metadata(opf: etree._Element) -> EpubMetadata:
         translators=tuple(translators),
         language=_text(opf.find("./opf:metadata/dc:language", namespaces)),
         identifiers=identifiers,
+        publisher=_text(opf.find("./opf:metadata/dc:publisher", namespaces)),
+        date=_text(opf.find("./opf:metadata/dc:date", namespaces)),
+        subject="; ".join(subjects) if subjects else None,
+        description=_text(opf.find("./opf:metadata/dc:description", namespaces)),
+        rights=_text(opf.find("./opf:metadata/dc:rights", namespaces)),
     )
 
 

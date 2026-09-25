@@ -275,10 +275,12 @@ def test_opf_declares_valid_oeb_1_2_structure_for_audio_full_text():
     assert format_duration(3_661_007) == "01:01:01.007"
 
 
-def test_uid_uses_normalized_isbn_or_stable_metadata_uuid():
+def test_uid_uses_stable_metadata_uuid_and_not_isbn():
     metadata = sample_book()["metadata"]
-    assert resolve_book_uid({**metadata, "isbn": "978-1-4028-9462-6"}) == "urn:isbn:9781402894626"
-    assert resolve_book_uid(metadata) == resolve_book_uid(dict(metadata))
+    metadata_with_isbn = {**metadata, "source": {"isbn": "978-1-4028-9462-6"}}
+    assert resolve_book_uid(metadata_with_isbn) == resolve_book_uid(dict(metadata_with_isbn))
+    assert resolve_book_uid(metadata_with_isbn).startswith("urn:uuid:")
+    assert "urn:isbn:" not in resolve_book_uid(metadata_with_isbn)
     assert resolve_book_uid(metadata).startswith("urn:uuid:")
 
 

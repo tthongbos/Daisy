@@ -6,7 +6,7 @@ from daisy_book.extract import (
     detect_chapter_markers,
     image_needs_alt_review,
 )
-from daisy_book.epub import EpubBook, EpubDocument, EpubMetadata
+from daisy_book.epub import EpubBook, EpubDocument, EpubMetadata, normalize_isbn
 
 
 def sample_html(chapter_count: int = 20) -> bytes:

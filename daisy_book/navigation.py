@@ -9,6 +9,23 @@ NCX_NS = "http://www.daisy.org/z3986/2005/ncx/"
 XML_NS = "http://www.w3.org/XML/1998/namespace"
 
 
+def _metadata_value(metadata: dict[str, Any], *path: str) -> str | None:
+    value: Any = metadata
+    for key in path:
+        if not isinstance(value, dict):
+            return None
+        value = value.get(key)
+    if isinstance(value, str):
+        cleaned = value.strip()
+        return cleaned or None
+    return None
+
+
+def _daisy_value(metadata: dict[str, Any], key: str) -> str | None:
+    daisy = metadata.get("daisy") if isinstance(metadata.get("daisy"), dict) else {}
+    return _metadata_value(daisy, key) or _metadata_value(metadata, key)
+
+
 def build_ncx(
     metadata: dict[str, Any],
     section: dict[str, Any],
@@ -30,6 +47,9 @@ def build_ncx(
         ("dtb:maxPageNumber", "0"),
     ):
         etree.SubElement(head, etree.QName(NCX_NS, "meta"), name=name, content=content)
+    generator = _daisy_value(metadata, "generator")
+    if generator:
+        etree.SubElement(head, etree.QName(NCX_NS, "meta"), name="dtb:generator", content=generator)
 
     doc_title = etree.SubElement(root, etree.QName(NCX_NS, "docTitle"))
     etree.SubElement(doc_title, etree.QName(NCX_NS, "text")).text = str(metadata["title"])
@@ -60,16 +80,7 @@ def build_ncx_multi(
     sections: list[dict[str, Any]],
     uid: str,
 ) -> etree._ElementTree:
-    """Build NCX for multiple sections with one navPoint per section.
-    
-    Args:
-        metadata: Book metadata
-        sections: List of sections in source order
-        uid: Unique identifier
-    
-    Returns:
-        ElementTree containing one navPoint per section with sequential playOrder
-    """
+    """Build NCX for multiple sections with one navPoint per section."""
     language = str(metadata.get("language") or "vi")
     root = etree.Element(
         etree.QName(NCX_NS, "ncx"),
@@ -85,6 +96,9 @@ def build_ncx_multi(
         ("dtb:maxPageNumber", "0"),
     ):
         etree.SubElement(head, etree.QName(NCX_NS, "meta"), name=name, content=content)
+    generator = _daisy_value(metadata, "generator")
+    if generator:
+        etree.SubElement(head, etree.QName(NCX_NS, "meta"), name="dtb:generator", content=generator)
 
     doc_title = etree.SubElement(root, etree.QName(NCX_NS, "docTitle"))
     etree.SubElement(doc_title, etree.QName(NCX_NS, "text")).text = str(metadata["title"])
@@ -92,8 +106,7 @@ def build_ncx_multi(
     etree.SubElement(doc_author, etree.QName(NCX_NS, "text")).text = str(metadata["author"])
 
     nav_map = etree.SubElement(root, etree.QName(NCX_NS, "navMap"))
-    
-    # Create one navPoint per section with sequential playOrder
+
     for play_order, section in enumerate(sections, start=1):
         nav_point = etree.SubElement(
             nav_map,
@@ -102,22 +115,17 @@ def build_ncx_multi(
             playOrder=str(play_order),
         )
         nav_label = etree.SubElement(nav_point, etree.QName(NCX_NS, "navLabel"))
-        
-        # Generate label: "Chương N. Title" for chapters, just title for introduction
         section_type = section.get("type", "chapter")
         number = section.get("number")
         if section_type == "introduction" or number is None:
             label = str(section["title"])
         else:
             label = f"Chương {number}. {section['title']}"
-        
         etree.SubElement(nav_label, etree.QName(NCX_NS, "text")).text = label
-        
-        # Target first synchronization point (title par) in this section's SMIL
         etree.SubElement(
             nav_point,
             etree.QName(NCX_NS, "content"),
             src=f"{section['id']}.smil#par_{section['id']}_title",
         )
-    
+
     return etree.ElementTree(root)

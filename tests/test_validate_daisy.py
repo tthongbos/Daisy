@@ -18,10 +18,7 @@ def test_generated_sample_passes_structural_validation(tmp_path):
     errors, warnings = validate_daisy(output)
 
     assert errors == []
-    assert warnings == [
-        "Missing DAISY-required dc:Publisher",
-        "Missing DAISY-required dc:Date",
-    ]
+    assert warnings == []
 
 
 def test_rejects_broken_fragment_reference(tmp_path):

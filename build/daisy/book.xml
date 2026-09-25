@@ -2,12 +2,15 @@
 <!DOCTYPE dtbook PUBLIC "-//NISO//DTD dtbook 2005-3//EN" "http://www.daisy.org/z3986/2005/dtbook-2005-3.dtd">
 <dtbook xmlns="http://www.daisy.org/z3986/2005/dtbook/" version="2005-3" xml:lang="vi">
   <head>
-    <meta name="dtb:uid" content="urn:uuid:3bc6e63e-e3ad-5937-a882-fcef6aead942"/>
+    <meta name="dtb:uid" content="urn:uuid:78801b41-22ae-5902-bc73-3d27ed3f8de3"/>
     <meta name="dc:Title" content="Tâm lý học về tiền"/>
     <meta name="dc:Creator" content="Morgan Housel"/>
     <meta name="dc:Contributor" content="Hoàng Thị Minh Phúc"/>
     <meta name="dc:Language" content="vi"/>
-    <meta name="dc:Subject" content="Tâm lý học &amp; Phát triển cá nhân"/>
+    <meta name="dc:Subject" content="Kinh tế &amp; Kinh doanh"/>
+    <meta name="dc:Description" content="Tâm lý học về tiền là cuốn sách giúp người đọc hiểu rõ hơn cách suy nghĩ và hành vi của con người ảnh hưởng đến việc kiếm tiền, sử dụng tiền và xây dựng sự ổn định tài chính."/>
+    <meta name="dc:Source" content="urn:isbn:9786043140156"/>
+    <meta name="dtb:generator" content="daisy-psychology-of-money 0.1.0"/>
   </head>
   <book>
     <bodymatter>

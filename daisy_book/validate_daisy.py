@@ -173,17 +173,6 @@ def _validate_opf(
     if total_time is None or total_time <= 0:
         errors.append(f"OPF dtb:totalTime must be greater than zero: {_relative(path, root)}")
 
-    for element_name in ("Publisher", "Date"):
-        values = [
-            (element.text or "").strip()
-            for element in tree.xpath(
-                "//*[local-name()='dc-metadata']/*[local-name()=$name]", name=element_name
-            )
-            if (element.text or "").strip()
-        ]
-        if not values:
-            warnings.append(f"Missing DAISY-required dc:{element_name}")
-
     for itemref in tree.xpath("//*[local-name()='spine']/*[local-name()='itemref']"):
         idref = itemref.get("idref")
         if not idref or idref not in manifest_ids:

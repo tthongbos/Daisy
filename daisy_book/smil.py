@@ -8,6 +8,18 @@ from lxml import etree
 SMIL_NS = "http://www.w3.org/2001/SMIL20/"
 
 
+def _metadata_value(metadata: dict[str, Any], *path: str) -> str | None:
+    value: Any = metadata
+    for key in path:
+        if not isinstance(value, dict):
+            return None
+        value = value.get(key)
+    if isinstance(value, str):
+        cleaned = value.strip()
+        return cleaned or None
+    return None
+
+
 def ms_to_smil_clock(milliseconds: int) -> str:
     if not isinstance(milliseconds, int) or isinstance(milliseconds, bool) or milliseconds < 0:
         raise ValueError("SMIL clock milliseconds must be a non-negative integer")
@@ -22,6 +34,7 @@ def build_smil(
     section_id: str,
     timing: dict[str, Any],
     uid: str,
+    metadata: dict[str, Any] | None = None,
 ) -> etree._ElementTree:
     root = etree.Element(
         etree.QName(SMIL_NS, "smil"),
@@ -29,6 +42,10 @@ def build_smil(
     )
     head = etree.SubElement(root, etree.QName(SMIL_NS, "head"))
     etree.SubElement(head, etree.QName(SMIL_NS, "meta"), name="dtb:uid", content=uid)
+    if metadata is not None:
+        generator = _metadata_value(metadata.get("daisy") if isinstance(metadata.get("daisy"), dict) else {}, "generator") or _metadata_value(metadata, "generator")
+        if generator:
+            etree.SubElement(head, etree.QName(SMIL_NS, "meta"), name="dtb:generator", content=generator)
     etree.SubElement(
         head,
         etree.QName(SMIL_NS, "meta"),

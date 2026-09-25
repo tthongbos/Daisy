@@ -218,18 +218,22 @@ def validate_source_relationships(
 
 
 def resolve_book_uid(metadata: dict[str, Any]) -> str:
-    isbn = metadata.get("isbn")
-    if isinstance(isbn, str) and isbn.strip():
-        normalized = re.sub(r"[^0-9Xx]", "", re.sub(r"^urn:isbn:", "", isbn.strip(), flags=re.I))
-        if normalized:
-            return f"urn:isbn:{normalized.upper()}"
-
     stable_metadata: dict[str, str] = {}
     for key in ("title", "author", "language"):
         value = metadata.get(key)
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"Book metadata requires a non-empty {key}")
         stable_metadata[key] = value.strip()
+    for key in ("subject", "translator"):
+        value = metadata.get(key)
+        if isinstance(value, str) and value.strip():
+            stable_metadata[key] = value.strip()
+    source = metadata.get("source")
+    if isinstance(source, dict):
+        for key in ("publisher", "date", "isbn"):
+            value = source.get(key)
+            if isinstance(value, str) and value.strip():
+                stable_metadata[f"source_{key}"] = value.strip()
     seed = json.dumps(stable_metadata, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return f"urn:uuid:{uuid.uuid5(uuid.NAMESPACE_URL, seed)}"
 
